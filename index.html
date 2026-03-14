@@ -62,6 +62,7 @@
         .graphFill { background: var(--accent); height: 100%; transition: width 0.4s ease-out; }
 
         .deleteBtn { background: transparent; color: #ff3b30; border: 1px solid #ff3b30; margin-top: 15px; font-size: 14px; padding: 8px; }
+        .status-msg { text-align: center; color: var(--accent); font-weight: 600; padding: 10px 0; }
     </style>
 </head>
 <body>
@@ -69,13 +70,22 @@
 <div class="container">
     <h1>Vape Tracker</h1>
 
-    <div class="inputCard">
-        <label for="morning">Morning Counter</label>
-        <input id="morning" type="number" placeholder="Value at start of day">
+    <div class="inputCard" id="mainInputCard">
+        <div id="morningContainer">
+            <label for="morning">Morning Counter</label>
+            <input id="morning" type="number" placeholder="Value at start of day">
+        </div>
+        
         <div id="eveningContainer" style="display:none;">
             <label for="evening">Evening Counter</label>
             <input id="evening" type="number" placeholder="Value at end of day">
         </div>
+        
+        <div id="completeMsg" style="display:none;" class="status-msg">
+            Day Complete! 🎉
+            <button id="resetTodayBtn" style="background: var(--border); color: var(--text-main); margin-top: 15px; font-size: 12px; padding: 8px;">Edit Today's Data</button>
+        </div>
+
         <button id="saveBtn">Save Record</button>
     </div>
 
@@ -120,7 +130,6 @@
 
 <script>
 (() => {
-    // UPDATED: 0.005ml is the realistic average for a 20mg pod/disposable puff
     const AVG_PUFF_ML = 0.005; 
     let entries = [];
 
@@ -131,7 +140,10 @@
         nicPerCig: document.getElementById("nicPerCig"),
         morning: document.getElementById("morning"),
         evening: document.getElementById("evening"),
+        morningContainer: document.getElementById("morningContainer"),
         eveningContainer: document.getElementById("eveningContainer"),
+        completeMsg: document.getElementById("completeMsg"),
+        resetTodayBtn: document.getElementById("resetTodayBtn"),
         entries: document.getElementById("entries"),
         graph: document.getElementById("graph"),
         saveBtn: document.getElementById("saveBtn"),
@@ -201,6 +213,26 @@
     function updateUI() {
         DOM.entries.innerHTML = "";
         const nicCig = parseFloat(DOM.nicPerCig.value) || 1.0;
+        const today = new Date().toISOString().split("T")[0];
+        const todaysEntry = entries.find(e => e.date === today);
+
+        // Visibility Logic for Inputs
+        if (!todaysEntry) {
+            DOM.morningContainer.style.display = "block";
+            DOM.eveningContainer.style.display = "none";
+            DOM.completeMsg.style.display = "none";
+            DOM.saveBtn.style.display = "block";
+        } else if (todaysEntry.morning !== undefined && todaysEntry.evening === undefined) {
+            DOM.morningContainer.style.display = "none";
+            DOM.eveningContainer.style.display = "block";
+            DOM.completeMsg.style.display = "none";
+            DOM.saveBtn.style.display = "block";
+        } else {
+            DOM.morningContainer.style.display = "none";
+            DOM.eveningContainer.style.display = "none";
+            DOM.completeMsg.style.display = "block";
+            DOM.saveBtn.style.display = "none";
+        }
 
         entries.forEach(e => {
             const cigEquiv = (e.nicotine / nicCig).toFixed(1);
@@ -221,6 +253,7 @@
             DOM.entries.appendChild(card);
         });
 
+        // Trend Graph
         DOM.graph.innerHTML = "";
         const last7 = entries.slice(0, 7).reverse();
         const max = Math.max(...last7.map(e => e.puffs || 0), 100);
@@ -230,10 +263,21 @@
                 <div class="graphLabel"><span>${e.date.slice(8)}</span><span>${e.puffs || 0}</span></div>
                 <div class="graphBar"><div class="graphFill" style="width:${pct}%"></div></div>`;
         });
-
-        const today = new Date().toISOString().split("T")[0];
-        DOM.eveningContainer.style.display = entries.find(e => e.date === today)?.morning !== undefined ? "block" : "none";
     }
+
+    DOM.resetTodayBtn.addEventListener("click", () => {
+        const today = new Date().toISOString().split("T")[0];
+        const todaysEntry = entries.find(e => e.date === today);
+        if (todaysEntry) {
+            DOM.morning.value = todaysEntry.morning;
+            DOM.evening.value = todaysEntry.evening || "";
+            // Temporarily hide the message to allow editing
+            DOM.completeMsg.style.display = "none";
+            DOM.morningContainer.style.display = "block";
+            DOM.eveningContainer.style.display = "block";
+            DOM.saveBtn.style.display = "block";
+        }
+    });
 
     DOM.toggleSettings.addEventListener("click", () => {
         const isVisible = DOM.settingsArea.style.display === "block";
