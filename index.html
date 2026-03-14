@@ -39,9 +39,9 @@
 
         /* Dashboard */
         .stats-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 20px; }
-        .stat-box { background: var(--card-bg); border: 1px solid var(--border); padding: 15px; border-radius: 16px; text-align: center; }
-        .stat-val { display: block; font-size: 22px; font-weight: 800; color: var(--save-color); }
-        .stat-lbl { font-size: 11px; color: var(--text-sub); text-transform: uppercase; letter-spacing: 0.5px; margin-top: 4px; display: block; }
+        .stat-box { background: var(--card-bg); border: 1px solid var(--border); padding: 12px; border-radius: 16px; text-align: center; }
+        .stat-val { display: block; font-size: 20px; font-weight: 800; color: var(--save-color); }
+        .stat-lbl { font-size: 10px; color: var(--text-sub); text-transform: uppercase; letter-spacing: 0.5px; margin-top: 4px; display: block; }
 
         .inputCard, .card { background: var(--card-bg); border: 1px solid var(--border); border-radius: 18px; padding: 20px; margin-bottom: 20px; box-sizing: border-box; }
         
@@ -55,13 +55,13 @@
 
         .date { font-size: 13px; color: var(--text-sub); text-transform: uppercase; margin-bottom: 10px; font-weight: 600; }
         .total-row { margin-top: 15px; padding-top: 15px; border-top: 1px solid var(--border); font-size: 15px; font-weight: 700; display: flex; flex-direction: column; gap: 6px; }
-        .cig-avoided { color: var(--save-color); font-size: 13px; }
+        .cig-avoided { color: var(--save-color); font-size: 13px; font-weight: 600; }
 
         .graphBar { height: 8px; border-radius: 4px; margin-bottom: 10px; width: 100%; background: var(--border); overflow: hidden; }
         .graphFill { background: var(--accent); height: 100%; transition: width 0.4s; }
         .graphLabel { font-size: 10px; color: var(--text-sub); margin-bottom: 2px; display: flex; justify-content: space-between; }
 
-        .deleteBtn { background: transparent; color: #ff3b30; border: 1px solid #ff3b30; margin-top: 15px; font-size: 12px; padding: 6px 12px; width: auto; border-radius: 8px; }
+        .deleteBtn { background: transparent; color: #ff3b30; border: 1px solid #ff3b30; margin-top: 15px; font-size: 12px; padding: 6px 12px; width: auto; border-radius: 8px; display: inline-block; }
         .settingsToggleBtn { background: var(--border); color: var(--text-main); margin-top: 20px; margin-bottom: 40px; }
     </style>
 </head>
@@ -71,8 +71,10 @@
     <h1>Vape Tracker</h1>
 
     <div class="stats-grid">
-        <div class="stat-box"><span id="stat-today" class="stat-val">0</span><span class="stat-lbl">Saved Today</span></div>
-        <div class="stat-box"><span id="stat-total" class="stat-val">0</span><span class="stat-lbl">Lifetime Saved</span></div>
+        <div class="stat-box"><span id="stat-today" class="stat-val">0</span><span class="stat-lbl">Today</span></div>
+        <div class="stat-box"><span id="stat-week" class="stat-val">0</span><span class="stat-lbl">Last 7d</span></div>
+        <div class="stat-box"><span id="stat-month" class="stat-val">0</span><span class="stat-lbl">Last 30d</span></div>
+        <div class="stat-box"><span id="stat-total" class="stat-val">0</span><span class="stat-lbl">Lifetime</span></div>
     </div>
 
     <div class="inputCard" id="mainInputCard">
@@ -103,19 +105,29 @@
         <div id="graph"></div>
     </div>
 
-    <button id="toggleSettings" class="settingsToggleBtn">Settings & Tools</button>
+    <button id="toggleSettings" class="settingsToggleBtn">Settings & Data</button>
 
     <div id="settingsArea" style="display:none;">
         <div class="inputCard">
             <h3>Configuration</h3>
             <label for="juiceStrength">Juice Strength (mg/ml)</label>
             <input id="juiceStrength" type="number" step="0.1">
+            
             <label for="deviceMax">Device Max (Rollover)</label>
             <input id="deviceMax" type="number">
+            
             <label for="oldHabit">Cigarettes per Day (Old Habit)</label>
             <input id="oldHabit" type="number">
+            
             <label for="nicPerCig">Nicotine per Cig (mg)</label>
-            <input id="nicPerCig" type="number" step="0.1" value="1.0">
+            <input id="nicPerCig" type="number" step="0.1">
+        </div>
+
+        <div class="inputCard">
+            <h3>Management</h3>
+            <button id="exportJsonBtn" style="margin-bottom: 10px; background: var(--border);">Backup JSON</button>
+            <input type="file" id="restoreFile" accept=".json" style="display:none;">
+            <button id="restoreBtn" style="background: transparent; border: 1px solid var(--border); color: var(--text-sub);">Restore JSON</button>
         </div>
     </div>
 </div>
@@ -140,9 +152,16 @@
         graph: document.getElementById("graph"),
         saveBtn: document.getElementById("saveBtn"),
         statToday: document.getElementById("stat-today"),
+        statWeek: document.getElementById("stat-week"),
+        statMonth: document.getElementById("stat-month"),
         statTotal: document.getElementById("stat-total"),
         insightsCard: document.getElementById("insightsCard"),
-        insightsList: document.getElementById("insightsList")
+        insightsList: document.getElementById("insightsList"),
+        settingsArea: document.getElementById("settingsArea"),
+        toggleSettings: document.getElementById("toggleSettings"),
+        exportJsonBtn: document.getElementById("exportJsonBtn"),
+        restoreFile: document.getElementById("restoreFile"),
+        restoreBtn: document.getElementById("restoreBtn")
     };
 
     function getLogicalDate() {
@@ -152,29 +171,33 @@
     }
 
     function loadData() {
-        entries = JSON.parse(localStorage.getItem("vapeEntries") || "[]");
+        const stored = JSON.parse(localStorage.getItem("vapeEntries") || "[]");
+        entries = Array.isArray(stored) ? stored : [];
         entries.sort((a, b) => b.date.localeCompare(a.date));
+        
         DOM.juiceStrength.value = localStorage.getItem("cfg_strength") || "20";
         DOM.deviceMax.value = localStorage.getItem("cfg_deviceMax") || "9999";
         DOM.oldHabit.value = localStorage.getItem("cfg_oldHabit") || "20";
         DOM.nicPerCig.value = localStorage.getItem("cfg_nicPerCig") || "1.0";
+        
         updateUI();
     }
 
     function generateInsights() {
-        if (entries.length < 2) return;
+        if (entries.length < 2) { DOM.insightsCard.style.display = "none"; return; }
         DOM.insightsCard.style.display = "block";
         DOM.insightsList.innerHTML = "";
         
-        const last7 = entries.slice(0, 7);
+        const last7 = entries.filter(e => e.puffs !== undefined).slice(0, 7);
+        if (last7.length === 0) return;
+
         const avgPuffs = last7.reduce((s, e) => s + (e.puffs || 0), 0) / last7.length;
-        
         const insight = document.createElement("div");
         insight.className = "insight-text";
-        insight.innerHTML = `Your 7-day average is <b>${Math.round(avgPuffs)}</b> puffs. `;
+        insight.innerHTML = `Avg: <b>${Math.round(avgPuffs)}</b> puffs. `;
         
-        if (last7[0].puffs < avgPuffs) insight.innerHTML += "Today you used less than your average. Great job! 👏";
-        else insight.innerHTML += "Today was slightly above average. Aim for a lower count tomorrow.";
+        if (entries[0].puffs < avgPuffs) insight.innerHTML += "Today is below average. Keep it up! 💪";
+        else insight.innerHTML += "You're above average today. Try to slow down.";
         
         DOM.insightsList.appendChild(insight);
     }
@@ -186,13 +209,15 @@
         const logDate = getLogicalDate();
         const todaysEntry = entries.find(e => e.date === logDate);
 
-        let totalSaved = 0;
-        let todaySaved = 0;
+        let totalSaved = 0, weekSaved = 0, monthSaved = 0, todaySaved = 0;
 
-        entries.forEach(e => {
-            const cigEquiv = (e.nicotine / nicCig);
+        entries.forEach((e, idx) => {
+            const cigEquiv = (e.nicotine || 0) / nicCig;
             const saved = Math.max(0, oldHabitCount - cigEquiv);
+            
             totalSaved += saved;
+            if (idx < 7) weekSaved += saved;
+            if (idx < 30) monthSaved += saved;
             if (e.date === logDate) todaySaved = saved;
 
             const card = document.createElement("div");
@@ -204,10 +229,16 @@
                     <span class="cig-avoided">💪 ${saved.toFixed(1)} Cigarettes Avoided</span>
                 </div>
             `;
+            const del = document.createElement("button");
+            del.className = "deleteBtn"; del.textContent = "Delete Record";
+            del.onclick = () => { if(confirm("Delete?")) { entries=entries.filter(x=>x.date!==e.date); saveData(); updateUI(); } };
+            card.appendChild(del);
             DOM.entries.appendChild(card);
         });
 
         DOM.statToday.textContent = todaySaved.toFixed(0);
+        DOM.statWeek.textContent = weekSaved.toFixed(0);
+        DOM.statMonth.textContent = monthSaved.toFixed(0);
         DOM.statTotal.textContent = totalSaved.toFixed(0);
 
         // Input Logic
@@ -221,7 +252,7 @@
 
         // Graph
         DOM.graph.innerHTML = "";
-        const trendData = entries.slice(0, 7).reverse();
+        const trendData = entries.filter(e => e.puffs !== undefined).slice(0, 7).reverse();
         const max = Math.max(...trendData.map(e => e.puffs || 0), 100);
         trendData.forEach(e => {
             const pct = Math.min(((e.puffs || 0) / max) * 100, 100);
@@ -229,6 +260,14 @@
         });
 
         generateInsights();
+    }
+
+    function saveData() {
+        localStorage.setItem("vapeEntries", JSON.stringify(entries));
+        localStorage.setItem("cfg_strength", DOM.juiceStrength.value);
+        localStorage.setItem("cfg_deviceMax", DOM.deviceMax.value);
+        localStorage.setItem("cfg_oldHabit", DOM.oldHabit.value);
+        localStorage.setItem("cfg_nicPerCig", DOM.nicPerCig.value);
     }
 
     DOM.saveBtn.addEventListener("click", () => {
@@ -239,15 +278,46 @@
         const logDate = getLogicalDate();
 
         let e = entries.find(x => x.date === logDate);
-        if (!e) { e = { date: logDate, juiceStrength: strength }; entries.unshift(e); }
+        if (!e) { e = { date: logDate }; entries.unshift(e); }
+        
         if (!isNaN(morningVal)) e.morning = morningVal;
         if (!isNaN(eveningVal)) e.evening = eveningVal;
+        
         if (e.morning !== undefined && e.evening !== undefined) {
             e.puffs = (e.evening < e.morning) ? (dMax - e.morning) + e.evening : e.evening - e.morning;
             e.nicotine = +(e.puffs * strength * AVG_PUFF_ML).toFixed(2);
         }
-        localStorage.setItem("vapeEntries", JSON.stringify(entries));
+        saveData();
         updateUI();
+        DOM.morning.value = ""; DOM.evening.value = "";
+    });
+
+    DOM.toggleSettings.addEventListener("click", () => {
+        const show = DOM.settingsArea.style.display === "none";
+        DOM.settingsArea.style.display = show ? "block" : "none";
+        DOM.toggleSettings.textContent = show ? "Close Settings" : "Settings & Data";
+    });
+
+    DOM.resetTodayBtn.addEventListener("click", () => {
+        const logDate = getLogicalDate();
+        const e = entries.find(x => x.date === logDate);
+        if (e) {
+            DOM.morning.value = e.morning; DOM.evening.value = e.evening || "";
+            DOM.completeMsg.style.display = "none"; DOM.morningContainer.style.display = "block"; DOM.eveningContainer.style.display = "block"; DOM.saveBtn.style.display = "block";
+        }
+    });
+
+    DOM.exportJsonBtn.addEventListener("click", () => {
+        const a = document.createElement("a");
+        a.href = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(entries));
+        a.download = "vape_backup.json"; a.click();
+    });
+
+    DOM.restoreBtn.addEventListener("click", () => DOM.restoreFile.click());
+    DOM.restoreFile.addEventListener("change", (e) => {
+        const reader = new FileReader();
+        reader.onload = (ev) => { entries = JSON.parse(ev.target.result); saveData(); updateUI(); alert("Restored!"); };
+        reader.readAsText(e.target.files[0]);
     });
 
     loadData();
