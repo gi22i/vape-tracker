@@ -46,13 +46,13 @@
         button:active { opacity: 0.7; }
 
         #settingsArea { display: none; margin-top: 10px; }
-        .settingsToggleBtn { background: var(--border); color: var(--text-main); margin-top: 20px; }
+        .settingsToggleBtn { background: var(--border); color: var(--text-main); margin-top: 20px; margin-bottom: 40px; }
         
         .input-group { position: relative; }
-        .tick-icon { position: absolute; right: 12px; top: 38px; color: var(--accent); font-weight: bold; opacity: 0; transition: opacity 0.3s; }
+        .tick-icon { position: absolute; right: 12px; top: 38px; color: var(--accent); font-weight: bold; opacity: 0; transition: opacity 0.3s; pointer-events: none; }
         input:not(:placeholder-shown) + .tick-icon { opacity: 1; }
 
-        .date { font-size: 13px; color: var(--text-sub); text-transform: uppercase; margin-bottom: 10px; }
+        .date { font-size: 13px; color: var(--text-sub); text-transform: uppercase; margin-bottom: 10px; font-weight: 600; }
         .row { display: flex; justify-content: space-between; margin: 6px 0; align-items: center; }
         .total-row { margin-top: 15px; padding-top: 15px; border-top: 1px solid var(--border); font-size: 16px; font-weight: 700; color: var(--accent); display: flex; flex-direction: column; gap: 4px; }
         .cig-equiv { color: var(--cig-color); font-size: 14px; font-weight: 500; }
@@ -61,7 +61,7 @@
         .graphBar { height: 10px; border-radius: 5px; margin-bottom: 12px; width: 100%; background: var(--border); overflow: hidden; }
         .graphFill { background: var(--accent); height: 100%; transition: width 0.4s ease-out; }
 
-        .deleteBtn { background: transparent; color: #ff3b30; border: 1px solid #ff3b30; margin-top: 15px; font-size: 14px; padding: 8px; }
+        .deleteBtn { background: transparent; color: #ff3b30; border: 1px solid #ff3b30; margin-top: 15px; font-size: 14px; padding: 8px; width: auto; display: inline-block; }
         .status-msg { text-align: center; color: var(--accent); font-weight: 600; padding: 10px 0; }
     </style>
 </head>
@@ -83,7 +83,7 @@
         
         <div id="completeMsg" style="display:none;" class="status-msg">
             Day Complete! 🎉
-            <button id="resetTodayBtn" style="background: var(--border); color: var(--text-main); margin-top: 15px; font-size: 12px; padding: 8px;">Edit Today's Data</button>
+            <button id="resetTodayBtn" style="background: var(--border); color: var(--text-main); margin-top: 15px; font-size: 12px; padding: 8px; width: 100%;">Edit Today's Data</button>
         </div>
 
         <button id="saveBtn">Save Record</button>
@@ -155,6 +155,15 @@
         restoreBtn: document.getElementById("restoreBtn")
     };
 
+    function getLogicalDate() {
+        const now = new Date();
+        // 4 AM Rollover Logic
+        if (now.getHours() < 4) {
+            now.setDate(now.getDate() - 1);
+        }
+        return now.toISOString().split("T")[0];
+    }
+
     function loadData() {
         const stored = JSON.parse(localStorage.getItem("vapeEntries") || "[]");
         entries = Array.isArray(stored) ? stored : [];
@@ -183,13 +192,13 @@
         const nicCig = parseFloat(DOM.nicPerCig.value) || 1.0;
         const morningVal = parseInt(DOM.morning.value);
         const eveningVal = parseInt(DOM.evening.value);
-        const today = new Date().toISOString().split("T")[0];
+        const logDate = getLogicalDate();
 
         if (isNaN(morningVal) && isNaN(eveningVal)) return;
 
-        let existing = entries.find(e => e.date === today);
+        let existing = entries.find(e => e.date === logDate);
         if (!existing) {
-            existing = { date: today, goal: goal, juiceStrength: strength, nicPerCig: nicCig };
+            existing = { date: logDate, goal: goal, juiceStrength: strength, nicPerCig: nicCig };
             entries.unshift(existing);
         }
 
@@ -213,10 +222,10 @@
     function updateUI() {
         DOM.entries.innerHTML = "";
         const nicCig = parseFloat(DOM.nicPerCig.value) || 1.0;
-        const today = new Date().toISOString().split("T")[0];
-        const todaysEntry = entries.find(e => e.date === today);
+        const logDate = getLogicalDate();
+        const todaysEntry = entries.find(e => e.date === logDate);
 
-        // Visibility Logic for Inputs
+        // Input Visibility Logic
         if (!todaysEntry) {
             DOM.morningContainer.style.display = "block";
             DOM.eveningContainer.style.display = "none";
@@ -240,38 +249,37 @@
             card.className = `card ${ (e.morning === undefined || e.evening === undefined) ? 'incomplete' : '' }`;
             card.innerHTML = `
                 <div class="date">${new Date(e.date).toLocaleDateString(undefined, {weekday:'short', day:'numeric'})}</div>
-                <div class="row"><span>Morning: ${e.morning ?? "-"}</span><span>Evening: ${e.evening ?? "-"}</span></div>
+                <div class="row"><span>Morn: ${e.morning ?? "-"}</span><span>Eve: ${e.evening ?? "-"}</span></div>
                 <div class="total-row">
-                    <span>${e.puffs || 0} Puffs • ${e.nicotine || 0}mg Nicotine</span>
-                    <span class="cig-equiv">≈ ${cigEquiv} L&M Red 100s Equivalent</span>
+                    <span>${e.puffs || 0} Puffs • ${e.nicotine || 0}mg Nic</span>
+                    <span class="cig-equiv">≈ ${cigEquiv} L&M Red 100s Equiv.</span>
                 </div>
             `;
             const del = document.createElement("button");
-            del.className = "deleteBtn"; del.textContent = "Delete Record";
-            del.onclick = () => { if(confirm("Delete?")) { entries=entries.filter(x=>x.date!==e.date); saveData(); updateUI(); } };
+            del.className = "deleteBtn"; del.textContent = "Delete";
+            del.onclick = () => { if(confirm("Delete this day?")) { entries=entries.filter(x=>x.date!==e.date); saveData(); updateUI(); } };
             card.appendChild(del);
             DOM.entries.appendChild(card);
         });
 
-        // Trend Graph
+        // Graphing
         DOM.graph.innerHTML = "";
         const last7 = entries.slice(0, 7).reverse();
         const max = Math.max(...last7.map(e => e.puffs || 0), 100);
         last7.forEach(e => {
             const pct = Math.min(((e.puffs || 0) / max) * 100, 100);
             DOM.graph.innerHTML += `
-                <div class="graphLabel"><span>${e.date.slice(8)}</span><span>${e.puffs || 0}</span></div>
+                <div class="graphLabel"><span>${e.date.split('-')[2]}</span><span>${e.puffs || 0}</span></div>
                 <div class="graphBar"><div class="graphFill" style="width:${pct}%"></div></div>`;
         });
     }
 
     DOM.resetTodayBtn.addEventListener("click", () => {
-        const today = new Date().toISOString().split("T")[0];
-        const todaysEntry = entries.find(e => e.date === today);
+        const logDate = getLogicalDate();
+        const todaysEntry = entries.find(e => e.date === logDate);
         if (todaysEntry) {
             DOM.morning.value = todaysEntry.morning;
             DOM.evening.value = todaysEntry.evening || "";
-            // Temporarily hide the message to allow editing
             DOM.completeMsg.style.display = "none";
             DOM.morningContainer.style.display = "block";
             DOM.eveningContainer.style.display = "block";
@@ -289,12 +297,12 @@
     DOM.exportJsonBtn.addEventListener("click", () => {
         const a = document.createElement("a");
         a.href = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(entries));
-        a.download = "vape_backup.json"; a.click();
+        a.download = "vape_tracker_backup.json"; a.click();
     });
     DOM.restoreBtn.addEventListener("click", () => DOM.restoreFile.click());
     DOM.restoreFile.addEventListener("change", (e) => {
         const reader = new FileReader();
-        reader.onload = (ev) => { entries = JSON.parse(ev.target.result); saveData(); updateUI(); alert("Restored"); };
+        reader.onload = (ev) => { entries = JSON.parse(ev.target.result); saveData(); updateUI(); alert("Data Restored!"); };
         reader.readAsText(e.target.files[0]);
     });
 
