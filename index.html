@@ -14,17 +14,21 @@ input,select{width:100%;padding:10px;margin-top:6px;margin-bottom:12px;backgroun
 button{width:100%;padding:12px;background:#333;border:none;border-radius:12px;color:#fff;font-size:16px;font-weight:600;margin-top:6px;}
 button:active{background:#555;}
 .card{background: linear-gradient(135deg,#111,#222);border-radius:16px;padding:18px;margin-bottom:15px;box-shadow:0 4px 12px rgba(0,0,0,0.6);}
+.card.incomplete{opacity:0.7;}
 .date{font-size:16px;color:#aaa;margin-bottom:6px;}
 .row{display:flex;justify-content:space-between;margin:4px 0;}
 .label{color:#888;}
 .value{font-weight:600;}
 .time{color:#888;font-size:12px;margin-left:6px;}
 .total{margin-top:10px;font-size:16px;font-weight:700;color:#fff;}
-.graphBar{height:14px;background:#4caf50;border-radius:7px;margin-bottom:6px;}
+.graphBar{height:14px;border-radius:7px;margin-bottom:6px;}
+.graphMorning{background:#4caf50;display:inline-block;height:14px;}
+.graphEvening{background:#2196f3;display:inline-block;height:14px;}
 .graphLabel{font-size:12px;color:#aaa;margin-bottom:2px;}
 .progressBarContainer{background:#333;border-radius:10px;overflow:hidden;margin-top:6px;}
 .progressBar{height:14px;background:#ff5722;}
 .deleteBtn{background:#880000;margin-top:6px;}
+.swipeHint{font-size:12px;color:#555;margin-top:4px;text-align:right;}
 </style>
 </head>
 <body>
@@ -35,6 +39,9 @@ button:active{background:#555;}
 <div class="inputCard">
 <label>Juice Strength (mg/ml)</label>
 <input id="juiceStrength" type="number" step="0.1" value="20">
+
+<label>Weekly Goal (puffs/day)</label>
+<input id="weeklyGoal" type="number" value="300">
 
 <label>Morning Counter</label>
 <input id="morning" type="number">
@@ -59,12 +66,25 @@ button:active{background:#555;}
 <div id="weeklySummary"></div>
 </div>
 
+<div class="inputCard">
+<h3>Historical Insights</h3>
+<div id="insights"></div>
+</div>
+
+<div class="inputCard">
+<button onclick="exportData()">Backup / Export JSON</button>
+<button onclick="exportCSV()">Export CSV</button>
+<input type="file" id="restoreFile" accept=".json" style="display:none;" onchange="restoreData(this.files)">
+<button onclick="document.getElementById('restoreFile').click()">Restore JSON</button>
+</div>
+
 </div>
 
 <script>
 const AVG_PUFF_ML=0.05;
 let entries=[];
 
+// ----- LOCAL STORAGE -----
 function loadData(){
   const stored=JSON.parse(localStorage.getItem("vapeEntries")||"[]");
   entries=stored;
@@ -73,13 +93,16 @@ function loadData(){
 }
 function saveData(){ localStorage.setItem("vapeEntries",JSON.stringify(entries)) }
 
+// ----- UTILS -----
 function formatTime(){ const d=new Date(); return d.toTimeString().split(' ')[0].slice(0,5); }
 
+// ----- ADD ENTRY -----
 function addEntry(){
   const juiceStrength=parseFloat(document.getElementById("juiceStrength").value)||20;
   const morningVal=parseInt(document.getElementById("morning").value);
   const eveningVal=parseInt(document.getElementById("evening").value);
   const today=new Date().toISOString().split("T")[0];
+  const weeklyGoal=parseInt(document.getElementById("weeklyGoal").value)||300;
 
   if(!morningVal && !eveningVal){ alert("Enter morning or evening counter"); return; }
 
@@ -89,15 +112,15 @@ function addEntry(){
     const evening=eveningVal||0;
     const puffs=(evening||0)-(morning||0);
     const nicotine=+(puffs*juiceStrength*AVG_PUFF_ML).toFixed(2);
-    entries.unshift({date:today,morning,morningTime:morningVal?formatTime():"",evening,eveningTime:eveningVal?formatTime():"",puffs,nicotine});
+    entries.unshift({date:today,morning,morningTime:morningVal?formatTime():"",evening,eveningTime:eveningVal?formatTime():"",puffs,nicotine,goal:weeklyGoal});
   }else{
     if(morningVal){ existing.morning=morningVal; existing.morningTime=formatTime(); }
     if(eveningVal){ existing.evening=eveningVal; existing.eveningTime=formatTime(); }
     existing.puffs=(existing.evening||0)-(existing.morning||0);
     existing.nicotine=+(existing.puffs*juiceStrength*AVG_PUFF_ML).toFixed(2);
+    existing.goal=weeklyGoal;
   }
 
-  // show evening if morning entered
   document.getElementById("eveningContainer").style.display=morningVal||existing.morning? "block":"none";
 
   saveData(); render();
@@ -105,6 +128,7 @@ function addEntry(){
   document.getElementById("evening").value="";
 }
 
+// ----- DELETE ENTRY -----
 function deleteEntry(date){
   if(confirm("Delete this entry?")){
     entries=entries.filter(e=>e.date!==date);
@@ -112,32 +136,41 @@ function deleteEntry(date){
   }
 }
 
+// ----- RENDER CARDS -----
 function render(){
   const container=document.getElementById("entries"); container.innerHTML="";
   entries.forEach(e=>{
-    const card=document.createElement("div"); card.className="card";
+    const card=document.createElement("div"); 
+    card.className="card";
+    if(!e.morning || !e.evening) card.classList.add("incomplete");
     card.innerHTML=`
       <div class="date">${e.date}</div>
       <div class="row"><div class="label">Morning</div><div class="value">${e.morning||"-"} <span class="time">${e.morningTime||""}</span></div></div>
       <div class="row"><div class="label">Evening</div><div class="value">${e.evening||"-"} <span class="time">${e.eveningTime||""}</span></div></div>
       <div class="total">Puffs: ${e.puffs||0} | Nicotine: ${e.nicotine||0} mg</div>
       <button class="deleteBtn" onclick="deleteEntry('${e.date}')">Delete Entry</button>
+      <div class="swipeHint">Swipe to delete</div>
     `;
     container.appendChild(card);
   });
-  renderGraph(); renderWeeklySummary();
+  renderGraph(); renderWeeklySummary(); renderInsights();
 }
 
+// ----- GRAPH -----
 function renderGraph(){
   const graph=document.getElementById("graph"); graph.innerHTML="";
   const last7=entries.slice(0,7).reverse();
   last7.forEach(e=>{
     const label=document.createElement("div"); label.className="graphLabel"; label.textContent=e.date;
-    const bar=document.createElement("div"); bar.className="graphBar"; bar.style.width=Math.min(100,e.puffs||0)+"%";
+    const bar=document.createElement("div"); 
+    const morningWidth=e.morning||0;
+    const eveningWidth=(e.evening||0)-(e.morning||0);
+    bar.innerHTML=`<div class="graphMorning" style="width:${morningWidth}px"></div><div class="graphEvening" style="width:${eveningWidth}px"></div>`;
     graph.appendChild(label); graph.appendChild(bar);
   });
 }
 
+// ----- WEEKLY SUMMARY -----
 function renderWeeklySummary(){
   const weekly=entries.slice(0,7);
   const totalPuffs=weekly.reduce((acc,e)=>acc+(e.puffs||0),0);
@@ -148,8 +181,7 @@ function renderWeeklySummary(){
   const avgMorning=weekly.length?Math.round(morningSum/weekly.length):0;
   const avgEvening=weekly.length?Math.round(eveningSum/weekly.length):0;
 
-  // weekly goal tracker (example goal: 300 puffs/day)
-  const goal=300; 
+  const goal=weekly.length?weekly[0].goal:300; 
   const progress=Math.min(100,(avgPuffs/goal)*100);
 
   document.getElementById("weeklySummary").innerHTML=`
@@ -161,7 +193,58 @@ function renderWeeklySummary(){
   `;
 }
 
-// auto-show evening if morning exists
+// ----- HISTORICAL INSIGHTS -----
+function renderInsights(){
+  if(!entries.length){ document.getElementById("insights").innerHTML="No data yet"; return; }
+  const morningVals=entries.map(e=>e.morning||0);
+  const eveningVals=entries.map(e=> (e.evening||0)-(e.morning||0));
+  const totalVals=entries.map(e=>e.puffs||0);
+  const highest=Math.max(...totalVals);
+  const lowest=Math.min(...totalVals);
+  const avgMorning=Math.round(morningVals.reduce((a,b)=>a+b,0)/morningVals.length);
+  const avgEvening=Math.round(eveningVals.reduce((a,b)=>a+b,0)/eveningVals.length);
+  document.getElementById("insights").innerHTML=`
+    Highest puffs/day: ${highest}<br>
+    Lowest puffs/day: ${lowest}<br>
+    Average Morning: ${avgMorning}<br>
+    Average Evening: ${avgEvening}
+  `;
+}
+
+// ----- EXPORT / RESTORE -----
+function exportData(){
+  const dataStr="data:text/json;charset=utf-8,"+encodeURIComponent(JSON.stringify(entries));
+  const dlAnchor=document.createElement("a");
+  dlAnchor.setAttribute("href",dataStr);
+  dlAnchor.setAttribute("download","vapeEntries.json");
+  dlAnchor.click();
+}
+function exportCSV(){
+  let csv="Date,Morning,Evening,Puffs,Nicotine(mg),JuiceStrength,Goal\n";
+  entries.forEach(e=>{
+    csv+=`${e.date},${e.morning||""},${e.evening||""},${e.puffs||""},${e.nicotine||""},${document.getElementById("juiceStrength").value},${e.goal||""}\n`;
+  });
+  const dlAnchor=document.createElement("a");
+  dlAnchor.setAttribute("href","data:text/csv;charset=utf-8,"+encodeURIComponent(csv));
+  dlAnchor.setAttribute("download","vapeEntries.csv");
+  dlAnchor.click();
+}
+function restoreData(files){
+  if(!files.length) return;
+  const reader=new FileReader();
+  reader.onload=e=>{
+    try{
+      const imported=JSON.parse(e.target.result);
+      if(Array.isArray(imported)){
+        entries=imported;
+        saveData(); render(); alert("Data restored successfully");
+      }else alert("Invalid JSON format");
+    }catch{alert("Error reading JSON");}
+  };
+  reader.readAsText(files[0]);
+}
+
+// ----- INITIAL LOAD -----
 document.addEventListener("DOMContentLoaded",()=>{
   const today=new Date().toISOString().split("T")[0];
   const existing=JSON.parse(localStorage.getItem("vapeEntries")||"[]").find(e=>e.date===today);
