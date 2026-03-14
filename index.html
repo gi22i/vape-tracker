@@ -16,7 +16,6 @@
             --border: #222222;
             --accent: #4caf50;
             --cig-color: #ff9800;
-            --save-color: #00bcd4;
         }
 
         @media (prefers-color-scheme: light) {
@@ -57,7 +56,6 @@
         .row { display: flex; justify-content: space-between; margin: 6px 0; align-items: center; }
         .total-row { margin-top: 15px; padding-top: 15px; border-top: 1px solid var(--border); font-size: 16px; font-weight: 700; color: var(--accent); display: flex; flex-direction: column; gap: 4px; }
         .cig-equiv { color: var(--cig-color); font-size: 14px; font-weight: 500; }
-        .cig-saved { color: var(--save-color); font-size: 14px; font-weight: 600; }
 
         .graphLabel { font-size: 11px; color: var(--text-sub); margin-bottom: 4px; display: flex; justify-content: space-between; }
         .graphBar { height: 10px; border-radius: 5px; margin-bottom: 12px; width: 100%; background: var(--border); overflow: hidden; }
@@ -107,9 +105,7 @@
 
             <label for="nicPerCig">Nicotine per Cigarette (mg)</label>
             <input id="nicPerCig" type="number" step="0.1" value="1.0">
-            
-            <label for="oldHabit">Old Habit (Cigs per day)</label>
-            <input id="oldHabit" type="number" value="20">
+            <p style="font-size: 11px; color: var(--text-sub); margin-top: -10px;">L&M Red 100s in PL are ~1.0mg.</p>
         </div>
 
         <div class="inputCard">
@@ -124,7 +120,8 @@
 
 <script>
 (() => {
-    const AVG_PUFF_ML = 0.05;
+    // UPDATED: 0.005ml is the realistic average for a 20mg pod/disposable puff
+    const AVG_PUFF_ML = 0.005; 
     let entries = [];
 
     const DOM = {
@@ -132,7 +129,6 @@
         dailyGoal: document.getElementById("dailyGoal"),
         deviceMax: document.getElementById("deviceMax"),
         nicPerCig: document.getElementById("nicPerCig"),
-        oldHabit: document.getElementById("oldHabit"),
         morning: document.getElementById("morning"),
         evening: document.getElementById("evening"),
         eveningContainer: document.getElementById("eveningContainer"),
@@ -156,7 +152,6 @@
         DOM.dailyGoal.value = localStorage.getItem("cfg_goal") || "300";
         DOM.deviceMax.value = localStorage.getItem("cfg_deviceMax") || "9999";
         DOM.nicPerCig.value = localStorage.getItem("cfg_nicPerCig") || "1.0";
-        DOM.oldHabit.value = localStorage.getItem("cfg_oldHabit") || "20";
         
         updateUI();
     }
@@ -167,12 +162,13 @@
         localStorage.setItem("cfg_goal", DOM.dailyGoal.value);
         localStorage.setItem("cfg_deviceMax", DOM.deviceMax.value);
         localStorage.setItem("cfg_nicPerCig", DOM.nicPerCig.value);
-        localStorage.setItem("cfg_oldHabit", DOM.oldHabit.value);
     }
 
     function handleSaveEntry() {
         const strength = parseFloat(DOM.juiceStrength.value) || 20;
+        const goal = parseInt(DOM.dailyGoal.value) || 300;
         const dMax = parseInt(DOM.deviceMax.value) || 9999;
+        const nicCig = parseFloat(DOM.nicPerCig.value) || 1.0;
         const morningVal = parseInt(DOM.morning.value);
         const eveningVal = parseInt(DOM.evening.value);
         const today = new Date().toISOString().split("T")[0];
@@ -181,7 +177,7 @@
 
         let existing = entries.find(e => e.date === today);
         if (!existing) {
-            existing = { date: today, goal: parseInt(DOM.dailyGoal.value), juiceStrength: strength };
+            existing = { date: today, goal: goal, juiceStrength: strength, nicPerCig: nicCig };
             entries.unshift(existing);
         }
 
@@ -205,25 +201,21 @@
     function updateUI() {
         DOM.entries.innerHTML = "";
         const nicCig = parseFloat(DOM.nicPerCig.value) || 1.0;
-        const habit = parseInt(DOM.oldHabit.value) || 20;
 
         entries.forEach(e => {
             const cigEquiv = (e.nicotine / nicCig).toFixed(1);
-            const saved = Math.max(0, habit - (e.nicotine / nicCig)).toFixed(1);
-            
             const card = document.createElement("div");
             card.className = `card ${ (e.morning === undefined || e.evening === undefined) ? 'incomplete' : '' }`;
             card.innerHTML = `
                 <div class="date">${new Date(e.date).toLocaleDateString(undefined, {weekday:'short', day:'numeric'})}</div>
-                <div class="row"><span>Morn: ${e.morning ?? "-"}</span><span>Eve: ${e.evening ?? "-"}</span></div>
+                <div class="row"><span>Morning: ${e.morning ?? "-"}</span><span>Evening: ${e.evening ?? "-"}</span></div>
                 <div class="total-row">
-                    <span>${e.puffs || 0} Puffs • ${e.nicotine || 0}mg Nic</span>
-                    <span class="cig-equiv">≈ ${cigEquiv} L&M Red Equivalent</span>
-                    <span class="cig-saved">🎉 ${saved} Cigarettes Saved</span>
+                    <span>${e.puffs || 0} Puffs • ${e.nicotine || 0}mg Nicotine</span>
+                    <span class="cig-equiv">≈ ${cigEquiv} L&M Red 100s Equivalent</span>
                 </div>
             `;
             const del = document.createElement("button");
-            del.className = "deleteBtn"; del.textContent = "Delete Day";
+            del.className = "deleteBtn"; del.textContent = "Delete Record";
             del.onclick = () => { if(confirm("Delete?")) { entries=entries.filter(x=>x.date!==e.date); saveData(); updateUI(); } };
             card.appendChild(del);
             DOM.entries.appendChild(card);
