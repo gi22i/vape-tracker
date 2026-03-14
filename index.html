@@ -35,9 +35,9 @@
         body { margin: 0; padding: 0; background-color: var(--bg-color); color: var(--text-main); font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; min-height: 100vh; display: block; -webkit-font-smoothing: antialiased; }
         .container { width: 100%; max-width: 600px; margin: 0 auto; padding: env(safe-area-inset-top, 20px) 15px env(safe-area-inset-bottom, 20px) 15px; box-sizing: border-box; }
         
-        h1 { text-align: center; margin: 10px 0 20px 0; font-weight: 700; font-size: 1.8em; letter-spacing: -0.5px; }
+        h1 { text-align: center; margin: 10px 0 20px 0; font-weight: 700; font-size: 1.8em; }
 
-        /* Stats Grid */
+        /* Dashboard */
         .stats-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 20px; }
         .stat-box { background: var(--card-bg); border: 1px solid var(--border); padding: 15px; border-radius: 16px; text-align: center; }
         .stat-val { display: block; font-size: 22px; font-weight: 800; color: var(--save-color); }
@@ -46,29 +46,23 @@
         .inputCard, .card { background: var(--card-bg); border: 1px solid var(--border); border-radius: 18px; padding: 20px; margin-bottom: 20px; box-sizing: border-box; }
         
         label { display: block; font-size: 14px; color: var(--text-sub); margin-left: 4px; margin-bottom: 4px; }
-        input { width: 100%; padding: 12px; margin-top: 4px; margin-bottom: 18px; background: var(--input-bg); border: 1px solid var(--border); border-radius: 12px; color: var(--text-main); font-size: 16px; box-sizing: border-box; outline: none; border: 1px solid var(--border); }
+        input { width: 100%; padding: 12px; margin-top: 4px; margin-bottom: 18px; background: var(--input-bg); border: 1px solid var(--border); border-radius: 12px; color: var(--text-main); font-size: 16px; box-sizing: border-box; outline: none; }
         input:focus { border-color: var(--accent); }
 
-        button { width: 100%; padding: 14px; background: var(--text-main); color: var(--bg-color); border: none; border-radius: 14px; font-size: 16px; font-weight: 600; cursor: pointer; -webkit-tap-highlight-color: transparent; }
-        button:active { opacity: 0.7; }
-
-        #settingsArea { display: none; margin-top: 10px; }
-        .settingsToggleBtn { background: var(--border); color: var(--text-main); margin-top: 20px; margin-bottom: 40px; }
+        button { width: 100%; padding: 14px; background: var(--text-main); color: var(--bg-color); border: none; border-radius: 14px; font-size: 16px; font-weight: 600; cursor: pointer; }
         
-        .tick-icon { position: absolute; right: 12px; top: 38px; color: var(--accent); font-weight: bold; opacity: 0; pointer-events: none; }
-        input:not(:placeholder-shown) + .tick-icon { opacity: 1; }
+        .insight-text { font-size: 14px; color: var(--text-main); line-height: 1.5; margin-bottom: 10px; padding: 10px; background: var(--input-bg); border-radius: 10px; border-left: 4px solid var(--accent); }
 
         .date { font-size: 13px; color: var(--text-sub); text-transform: uppercase; margin-bottom: 10px; font-weight: 600; }
-        .row { display: flex; justify-content: space-between; margin: 6px 0; align-items: center; }
-        .total-row { margin-top: 15px; padding-top: 15px; border-top: 1px solid var(--border); font-size: 15px; font-weight: 700; color: var(--accent); display: flex; flex-direction: column; gap: 6px; }
-        .cig-equiv { color: var(--cig-color); font-size: 13px; font-weight: 500; }
-        .cig-avoided { color: var(--save-color); font-size: 13px; font-weight: 600; }
+        .total-row { margin-top: 15px; padding-top: 15px; border-top: 1px solid var(--border); font-size: 15px; font-weight: 700; display: flex; flex-direction: column; gap: 6px; }
+        .cig-avoided { color: var(--save-color); font-size: 13px; }
 
         .graphBar { height: 8px; border-radius: 4px; margin-bottom: 10px; width: 100%; background: var(--border); overflow: hidden; }
         .graphFill { background: var(--accent); height: 100%; transition: width 0.4s; }
         .graphLabel { font-size: 10px; color: var(--text-sub); margin-bottom: 2px; display: flex; justify-content: space-between; }
 
         .deleteBtn { background: transparent; color: #ff3b30; border: 1px solid #ff3b30; margin-top: 15px; font-size: 12px; padding: 6px 12px; width: auto; border-radius: 8px; }
+        .settingsToggleBtn { background: var(--border); color: var(--text-main); margin-top: 20px; margin-bottom: 40px; }
     </style>
 </head>
 <body>
@@ -77,10 +71,8 @@
     <h1>Vape Tracker</h1>
 
     <div class="stats-grid">
-        <div class="stat-box"><span id="stat-today" class="stat-val">0</span><span class="stat-lbl">Today</span></div>
-        <div class="stat-box"><span id="stat-week" class="stat-val">0</span><span class="stat-lbl">Last 7d</span></div>
-        <div class="stat-box"><span id="stat-month" class="stat-val">0</span><span class="stat-lbl">Last 30d</span></div>
-        <div class="stat-box"><span id="stat-total" class="stat-val">0</span><span class="stat-lbl">Lifetime</span></div>
+        <div class="stat-box"><span id="stat-today" class="stat-val">0</span><span class="stat-lbl">Saved Today</span></div>
+        <div class="stat-box"><span id="stat-total" class="stat-val">0</span><span class="stat-lbl">Lifetime Saved</span></div>
     </div>
 
     <div class="inputCard" id="mainInputCard">
@@ -92,11 +84,16 @@
             <label for="evening">Evening Counter</label>
             <input id="evening" type="number" placeholder="Enter evening value">
         </div>
-        <div id="completeMsg" style="display:none; text-align: center; color: var(--accent); font-weight: 700;">
+        <div id="completeMsg" style="display:none; text-align: center; color: var(--accent); font-weight: 700; padding: 10px 0;">
             Day Logged! 🎉
-            <button id="resetTodayBtn" style="background: var(--border); color: var(--text-main); margin-top: 10px; font-size: 12px; padding: 6px;">Edit Today</button>
+            <button id="resetTodayBtn" style="background: var(--border); color: var(--text-main); margin-top: 10px; font-size: 12px; padding: 6px; width: 100%;">Edit Today's Data</button>
         </div>
         <button id="saveBtn">Save Entry</button>
+    </div>
+
+    <div class="card" id="insightsCard" style="display:none;">
+        <div class="date" style="color: var(--accent);">Weekly Insights</div>
+        <div id="insightsList"></div>
     </div>
 
     <div id="entries"></div>
@@ -108,30 +105,17 @@
 
     <button id="toggleSettings" class="settingsToggleBtn">Settings & Tools</button>
 
-    <div id="settingsArea">
+    <div id="settingsArea" style="display:none;">
         <div class="inputCard">
-            <h3>Setup</h3>
+            <h3>Configuration</h3>
             <label for="juiceStrength">Juice Strength (mg/ml)</label>
-            <input id="juiceStrength" type="number">
-            
-            <div class="input-group" style="position:relative;">
-                <label for="deviceMax">Device Max (Rollover)</label>
-                <input id="deviceMax" type="number">
-                <span class="tick-icon">✓</span>
-            </div>
-
+            <input id="juiceStrength" type="number" step="0.1">
+            <label for="deviceMax">Device Max (Rollover)</label>
+            <input id="deviceMax" type="number">
             <label for="oldHabit">Cigarettes per Day (Old Habit)</label>
             <input id="oldHabit" type="number">
-
             <label for="nicPerCig">Nicotine per Cig (mg)</label>
-            <input id="nicPerCig" type="number" step="0.1">
-        </div>
-
-        <div class="inputCard">
-            <h3>Data</h3>
-            <button id="exportJsonBtn" style="background: var(--border); margin-bottom: 10px;">Backup JSON</button>
-            <input type="file" id="restoreFile" accept=".json" style="display:none;">
-            <button id="restoreBtn" style="background: transparent; border: 1px solid var(--border); color: var(--text-sub);">Restore JSON</button>
+            <input id="nicPerCig" type="number" step="0.1" value="1.0">
         </div>
     </div>
 </div>
@@ -155,15 +139,10 @@
         entries: document.getElementById("entries"),
         graph: document.getElementById("graph"),
         saveBtn: document.getElementById("saveBtn"),
-        toggleSettings: document.getElementById("toggleSettings"),
-        settingsArea: document.getElementById("settingsArea"),
-        exportJsonBtn: document.getElementById("exportJsonBtn"),
-        restoreFile: document.getElementById("restoreFile"),
-        restoreBtn: document.getElementById("restoreBtn"),
         statToday: document.getElementById("stat-today"),
-        statWeek: document.getElementById("stat-week"),
-        statMonth: document.getElementById("stat-month"),
-        statTotal: document.getElementById("stat-total")
+        statTotal: document.getElementById("stat-total"),
+        insightsCard: document.getElementById("insightsCard"),
+        insightsList: document.getElementById("insightsList")
     };
 
     function getLogicalDate() {
@@ -173,24 +152,31 @@
     }
 
     function loadData() {
-        const stored = JSON.parse(localStorage.getItem("vapeEntries") || "[]");
-        entries = Array.isArray(stored) ? stored : [];
+        entries = JSON.parse(localStorage.getItem("vapeEntries") || "[]");
         entries.sort((a, b) => b.date.localeCompare(a.date));
-        
         DOM.juiceStrength.value = localStorage.getItem("cfg_strength") || "20";
         DOM.deviceMax.value = localStorage.getItem("cfg_deviceMax") || "9999";
         DOM.oldHabit.value = localStorage.getItem("cfg_oldHabit") || "20";
         DOM.nicPerCig.value = localStorage.getItem("cfg_nicPerCig") || "1.0";
-        
         updateUI();
     }
 
-    function saveData() {
-        localStorage.setItem("vapeEntries", JSON.stringify(entries));
-        localStorage.setItem("cfg_strength", DOM.juiceStrength.value);
-        localStorage.setItem("cfg_deviceMax", DOM.deviceMax.value);
-        localStorage.setItem("cfg_oldHabit", DOM.oldHabit.value);
-        localStorage.setItem("cfg_nicPerCig", DOM.nicPerCig.value);
+    function generateInsights() {
+        if (entries.length < 2) return;
+        DOM.insightsCard.style.display = "block";
+        DOM.insightsList.innerHTML = "";
+        
+        const last7 = entries.slice(0, 7);
+        const avgPuffs = last7.reduce((s, e) => s + (e.puffs || 0), 0) / last7.length;
+        
+        const insight = document.createElement("div");
+        insight.className = "insight-text";
+        insight.innerHTML = `Your 7-day average is <b>${Math.round(avgPuffs)}</b> puffs. `;
+        
+        if (last7[0].puffs < avgPuffs) insight.innerHTML += "Today you used less than your average. Great job! 👏";
+        else insight.innerHTML += "Today was slightly above average. Aim for a lower count tomorrow.";
+        
+        DOM.insightsList.appendChild(insight);
     }
 
     function updateUI() {
@@ -200,46 +186,31 @@
         const logDate = getLogicalDate();
         const todaysEntry = entries.find(e => e.date === logDate);
 
-        // Calculate Stats
-        let totalAvoided = 0;
-        let weekAvoided = 0;
-        let monthAvoided = 0;
-        let todayAvoided = 0;
+        let totalSaved = 0;
+        let todaySaved = 0;
 
-        entries.forEach((e, idx) => {
+        entries.forEach(e => {
             const cigEquiv = (e.nicotine / nicCig);
             const saved = Math.max(0, oldHabitCount - cigEquiv);
-            
-            totalAvoided += saved;
-            if (idx < 7) weekAvoided += saved;
-            if (idx < 30) monthAvoided += saved;
-            if (e.date === logDate) todayAvoided = saved;
+            totalSaved += saved;
+            if (e.date === logDate) todaySaved = saved;
 
             const card = document.createElement("div");
             card.className = "card";
             card.innerHTML = `
                 <div class="date">${new Date(e.date).toLocaleDateString(undefined, {weekday:'short', day:'numeric'})}</div>
-                <div class="row"><span>Morn: ${e.morning ?? "-"}</span><span>Eve: ${e.evening ?? "-"}</span></div>
                 <div class="total-row">
-                    <span>${e.puffs || 0} Puffs • ${e.nicotine || 0}mg Nic</span>
-                    <span class="cig-equiv">≈ ${cigEquiv.toFixed(1)} L&M Equiv.</span>
-                    <span class="cig-avoided">💪 ${saved.toFixed(1)} Saved</span>
+                    <span style="color:var(--accent)">${e.puffs || 0} Puffs</span>
+                    <span class="cig-avoided">💪 ${saved.toFixed(1)} Cigarettes Avoided</span>
                 </div>
             `;
-            const del = document.createElement("button");
-            del.className = "deleteBtn"; del.textContent = "Delete";
-            del.onclick = () => { if(confirm("Delete?")) { entries=entries.filter(x=>x.date!==e.date); saveData(); updateUI(); } };
-            card.appendChild(del);
             DOM.entries.appendChild(card);
         });
 
-        // Update Dashboard
-        DOM.statToday.textContent = todayAvoided.toFixed(0);
-        DOM.statWeek.textContent = weekAvoided.toFixed(0);
-        DOM.statMonth.textContent = monthAvoided.toFixed(0);
-        DOM.statTotal.textContent = totalAvoided.toFixed(0);
+        DOM.statToday.textContent = todaySaved.toFixed(0);
+        DOM.statTotal.textContent = totalSaved.toFixed(0);
 
-        // Input visibility
+        // Input Logic
         if (!todaysEntry) {
             DOM.morningContainer.style.display = "block"; DOM.eveningContainer.style.display = "none"; DOM.completeMsg.style.display = "none"; DOM.saveBtn.style.display = "block";
         } else if (todaysEntry.evening === undefined) {
@@ -250,12 +221,14 @@
 
         // Graph
         DOM.graph.innerHTML = "";
-        const last7 = entries.slice(0, 7).reverse();
-        const max = Math.max(...last7.map(e => e.puffs || 0), 100);
-        last7.forEach(e => {
+        const trendData = entries.slice(0, 7).reverse();
+        const max = Math.max(...trendData.map(e => e.puffs || 0), 100);
+        trendData.forEach(e => {
             const pct = Math.min(((e.puffs || 0) / max) * 100, 100);
             DOM.graph.innerHTML += `<div class="graphLabel"><span>${e.date.split('-')[2]}</span><span>${e.puffs || 0}</span></div><div class="graphBar"><div class="graphFill" style="width:${pct}%"></div></div>`;
         });
+
+        generateInsights();
     }
 
     DOM.saveBtn.addEventListener("click", () => {
@@ -265,49 +238,19 @@
         const eveningVal = parseInt(DOM.evening.value);
         const logDate = getLogicalDate();
 
-        let existing = entries.find(e => e.date === logDate);
-        if (!existing) {
-            existing = { date: logDate, juiceStrength: strength };
-            entries.unshift(existing);
+        let e = entries.find(x => x.date === logDate);
+        if (!e) { e = { date: logDate, juiceStrength: strength }; entries.unshift(e); }
+        if (!isNaN(morningVal)) e.morning = morningVal;
+        if (!isNaN(eveningVal)) e.evening = eveningVal;
+        if (e.morning !== undefined && e.evening !== undefined) {
+            e.puffs = (e.evening < e.morning) ? (dMax - e.morning) + e.evening : e.evening - e.morning;
+            e.nicotine = +(e.puffs * strength * AVG_PUFF_ML).toFixed(2);
         }
-        if (!isNaN(morningVal)) existing.morning = morningVal;
-        if (!isNaN(eveningVal)) existing.evening = eveningVal;
-        if (existing.morning !== undefined && existing.evening !== undefined) {
-            existing.puffs = (existing.evening < existing.morning) ? (dMax - existing.morning) + existing.evening : existing.evening - existing.morning;
-            existing.nicotine = +(existing.puffs * strength * AVG_PUFF_ML).toFixed(2);
-        }
-        saveData(); updateUI();
-        DOM.morning.value = ""; DOM.evening.value = "";
+        localStorage.setItem("vapeEntries", JSON.stringify(entries));
+        updateUI();
     });
 
-    DOM.resetTodayBtn.addEventListener("click", () => {
-        const logDate = getLogicalDate();
-        const todaysEntry = entries.find(e => e.date === logDate);
-        if (todaysEntry) {
-            DOM.morning.value = todaysEntry.morning; DOM.evening.value = todaysEntry.evening || "";
-            DOM.completeMsg.style.display = "none"; DOM.morningContainer.style.display = "block"; DOM.eveningContainer.style.display = "block"; DOM.saveBtn.style.display = "block";
-        }
-    });
-
-    DOM.toggleSettings.addEventListener("click", () => {
-        const isVisible = DOM.settingsArea.style.display === "block";
-        DOM.settingsArea.style.display = isVisible ? "none" : "block";
-        DOM.toggleSettings.textContent = isVisible ? "Settings & Tools" : "Close Settings";
-    });
-
-    DOM.exportJsonBtn.addEventListener("click", () => {
-        const a = document.createElement("a");
-        a.href = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(entries));
-        a.download = "vape_backup.json"; a.click();
-    });
-    DOM.restoreBtn.addEventListener("click", () => DOM.restoreFile.click());
-    DOM.restoreFile.addEventListener("change", (e) => {
-        const reader = new FileReader();
-        reader.onload = (ev) => { entries = JSON.parse(ev.target.result); saveData(); updateUI(); alert("Restored!"); };
-        reader.readAsText(e.target.files[0]);
-    });
-
-    document.addEventListener("DOMContentLoaded", loadData);
+    loadData();
 })();
 </script>
 </body>
