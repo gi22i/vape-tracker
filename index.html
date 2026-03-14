@@ -1,420 +1,376 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<title>Vape Tracker Advanced</title>
-<style>
-  body {
-    margin: 0;
-    padding-top: env(safe-area-inset-top, 20px);
-    padding-bottom: env(safe-area-inset-bottom, 20px);
-    padding-left: env(safe-area-inset-left, 0);
-    padding-right: env(safe-area-inset-right, 0);
-    background: #000;
-    color: #e0e0e0;
-    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-    min-height: 100vh;
-    display: flex;
-    justify-content: center;
-  }
-  .container {
-    width: 100%;
-    max-width: 600px;
-    padding: 0 10px;
-    min-height: calc(100vh - env(safe-area-inset-top) - env(safe-area-inset-bottom));
-  }
-  
-  h1 { text-align: center; margin-bottom: 20px; font-weight: 600; font-size: 1.8em; }
-  
-  .inputCard, .card {
-    background: #1a1a1a;
-    border-radius: 16px;
-    padding: 18px;
-    margin-bottom: 20px;
-    box-shadow: 0 4px 10px rgba(0,0,0,0.6);
-    width: 100%;
-    box-sizing: border-box;
-  }
-  input, select {
-    width: 100%;
-    padding: 10px;
-    margin-top: 6px;
-    margin-bottom: 12px;
-    background: #000;
-    border: 1px solid #333;
-    border-radius: 10px;
-    color: #fff;
-    font-size: 16px;
-    box-sizing: border-box;
-  }
-  button {
-    width: 100%;
-    padding: 12px;
-    background: #333;
-    border: none;
-    border-radius: 12px;
-    color: #fff;
-    font-size: 16px;
-    font-weight: 600;
-    margin-top: 6px;
-    cursor: pointer;
-  }
-  button:active { background: #555; }
-  
-  .card.incomplete { opacity: 0.7; }
-  .date { font-size: 16px; color: #aaa; margin-bottom: 6px; }
-  .row { display: flex; justify-content: space-between; margin: 4px 0; }
-  .label { color: #888; }
-  .value { font-weight: 600; }
-  .time { color: #888; font-size: 12px; margin-left: 6px; }
-  .total { margin-top: 10px; font-size: 16px; font-weight: 700; color: #fff; }
-  
-  .graphBar { height: 14px; border-radius: 7px; margin-bottom: 6px; width: 100%; background: #222; overflow: hidden; }
-  .graphFill { background: #4caf50; height: 100%; border-radius: 7px; transition: width 0.3s ease; }
-  .graphLabel { font-size: 12px; color: #aaa; margin-bottom: 2px; text-align: left; display: flex; justify-content: space-between;}
-  
-  .progressBarContainer { background: #333; border-radius: 10px; overflow: hidden; margin-top: 6px; width: 100%; }
-  .progressBar { height: 14px; background: #ff5722; width: 0%; transition: width 0.3s ease; }
-  
-  .deleteBtn { background: #880000; margin-top: 12px; }
-  .deleteBtn:active { background: #a00000; }
-</style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <title>Vape Tracker Advanced</title>
+    <style>
+        /* 1. Root level blackout to fill notch and home indicator areas */
+        html {
+            background-color: #000;
+            height: 100%;
+        }
+
+        body {
+            margin: 0;
+            padding: 0;
+            background-color: #000;
+            color: #e0e0e0;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            min-height: 100vh;
+            display: block;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 600px;
+            margin: 0 auto;
+            /* Adaptive padding for Standalone vs Browser mode */
+            padding: env(safe-area-inset-top, 20px) 15px env(safe-area-inset-bottom, 20px) 15px;
+            box-sizing: border-box;
+        }
+
+        h1 { 
+            text-align: center; 
+            margin: 15px 0 25px 0; 
+            font-weight: 700; 
+            font-size: 2em;
+            letter-spacing: -0.5px;
+        }
+
+        /* Card Styling */
+        .inputCard, .card {
+            background: #121212;
+            border: 1px solid #222;
+            border-radius: 18px;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-sizing: border-box;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.5);
+        }
+
+        label {
+            display: block;
+            font-size: 14px;
+            color: #888;
+            margin-left: 4px;
+        }
+
+        input {
+            width: 100%;
+            padding: 12px;
+            margin-top: 8px;
+            margin-bottom: 18px;
+            background: #1a1a1a;
+            border: 1px solid #333;
+            border-radius: 12px;
+            color: #fff;
+            font-size: 16px; /* Prevents iOS auto-zoom */
+            box-sizing: border-box;
+            outline: none;
+        }
+
+        input:focus {
+            border-color: #444;
+        }
+
+        button {
+            width: 100%;
+            padding: 14px;
+            background: #2a2a2a;
+            border: none;
+            border-radius: 14px;
+            color: #fff;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background 0.2s;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        button:active {
+            background: #444;
+        }
+
+        /* Data Card Details */
+        .card.incomplete { opacity: 0.6; border-style: dashed; }
+        .date { font-size: 13px; color: #888; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 10px; }
+        .row { display: flex; justify-content: space-between; margin: 6px 0; align-items: center; }
+        .label-text { color: #aaa; font-size: 15px; }
+        .value-text { font-weight: 600; color: #fff; font-size: 16px; }
+        .time-text { color: #555; font-size: 12px; margin-left: 6px; font-weight: normal; }
+        .total-row { 
+            margin-top: 15px; 
+            padding-top: 15px; 
+            border-top: 1px solid #222; 
+            font-size: 16px; 
+            font-weight: 700; 
+            color: #4caf50;
+        }
+
+        /* Visualization */
+        .graphLabel { font-size: 12px; color: #777; margin-bottom: 4px; display: flex; justify-content: space-between; }
+        .graphBar { height: 10px; border-radius: 5px; margin-bottom: 12px; width: 100%; background: #1a1a1a; overflow: hidden; }
+        .graphFill { background: #4caf50; height: 100%; transition: width 0.4s ease-out; }
+        
+        .progressBarContainer { background: #1a1a1a; border-radius: 10px; height: 10px; overflow: hidden; margin-top: 10px; }
+        .progressBar { height: 100%; transition: width 0.5s ease; }
+
+        .deleteBtn { background: #3d0000; color: #ff5555; margin-top: 15px; font-size: 14px; padding: 10px; }
+        
+        h3 { margin-top: 0; font-size: 1.2em; color: #fff; }
+    </style>
 </head>
 <body>
+
 <div class="container">
+    <h1>Vape Tracker Advanced</h1>
 
-  <h1>Vape Tracker Advanced</h1>
-  
-  <div class="inputCard">
-    <label for="juiceStrength">Juice Strength (mg/ml)</label>
-    <input id="juiceStrength" type="number" step="0.1" value="20">
-    
-    <label for="dailyGoal">Daily Goal (puffs per day)</label>
-    <input id="dailyGoal" type="number" value="300">
-    
-    <label for="morning">Morning Counter</label>
-    <input id="morning" type="number">
-    
-    <div id="eveningContainer" style="display:none;">
-      <label for="evening">Evening Counter</label>
-      <input id="evening" type="number">
+    <div class="inputCard">
+        <label for="juiceStrength">Juice Strength (mg/ml)</label>
+        <input id="juiceStrength" type="number" step="0.1" value="20">
+
+        <label for="dailyGoal">Daily Goal (puffs per day)</label>
+        <input id="dailyGoal" type="number" value="300">
+
+        <label for="morning">Morning Counter</label>
+        <input id="morning" type="number" placeholder="Enter morning reading">
+
+        <div id="eveningContainer" style="display:none;">
+            <label for="evening">Evening Counter</label>
+            <input id="evening" type="number" placeholder="Enter evening reading">
+        </div>
+
+        <button id="saveBtn">Save Entry</button>
     </div>
-    
-    <button id="saveBtn">Save Entry</button>
-  </div>
-  
-  <div id="entries"></div>
-  
-  <div class="inputCard">
-    <h3>Last 7 Days Puff Graph</h3>
-    <div id="graph"></div>
-  </div>
-  
-  <div class="inputCard">
-    <h3>Weekly Summary</h3>
-    <div id="weeklySummary"></div>
-  </div>
-  
-  <div class="inputCard">
-    <h3>Historical Insights</h3>
-    <div id="insights"></div>
-  </div>
-  
-  <div class="inputCard">
-    <button id="exportJsonBtn">Backup / Export JSON</button>
-    <button id="exportCsvBtn">Export CSV</button>
-    <input type="file" id="restoreFile" accept=".json" style="display:none;">
-    <button id="restoreBtn">Restore JSON</button>
-  </div>
 
+    <div id="entries"></div>
+
+    <div class="inputCard">
+        <h3>Weekly Trend</h3>
+        <div id="graph"></div>
+    </div>
+
+    <div class="inputCard">
+        <h3>Summary</h3>
+        <div id="weeklySummary"></div>
+    </div>
+
+    <div class="inputCard">
+        <h3>Insights</h3>
+        <div id="insights"></div>
+    </div>
+
+    <div class="inputCard" style="background: transparent; border: none; box-shadow: none;">
+        <button id="exportJsonBtn" style="margin-bottom: 10px;">Backup JSON</button>
+        <button id="exportCsvBtn" style="margin-bottom: 10px;">Export CSV</button>
+        <input type="file" id="restoreFile" accept=".json" style="display:none;">
+        <button id="restoreBtn" style="background: #111; color: #888;">Restore JSON</button>
+    </div>
 </div>
 
 <script>
-// IIFE to prevent global scope pollution
 (() => {
-  const AVG_PUFF_ML = 0.05;
-  const VAPE_COUNTER_MAX = 9999; // Change this if your device goes to 99999
-  let entries = [];
+    const AVG_PUFF_ML = 0.05;
+    const VAPE_COUNTER_MAX = 9999; // Common rollover point
+    let entries = [];
 
-  // DOM Elements cache
-  const DOM = {
-    juiceStrength: document.getElementById("juiceStrength"),
-    dailyGoal: document.getElementById("dailyGoal"),
-    morning: document.getElementById("morning"),
-    evening: document.getElementById("evening"),
-    eveningContainer: document.getElementById("eveningContainer"),
-    entries: document.getElementById("entries"),
-    graph: document.getElementById("graph"),
-    weeklySummary: document.getElementById("weeklySummary"),
-    insights: document.getElementById("insights"),
-    saveBtn: document.getElementById("saveBtn"),
-    exportJsonBtn: document.getElementById("exportJsonBtn"),
-    exportCsvBtn: document.getElementById("exportCsvBtn"),
-    restoreFile: document.getElementById("restoreFile"),
-    restoreBtn: document.getElementById("restoreBtn")
-  };
-
-  // --- DATA LAYER ---
-  function loadData() {
-    try {
-      const stored = JSON.parse(localStorage.getItem("vapeEntries") || "[]");
-      entries = Array.isArray(stored) ? stored : [];
-      entries.sort((a, b) => b.date.localeCompare(a.date));
-    } catch (e) {
-      console.error("Failed to load data", e);
-      entries = [];
-    }
-    updateUI();
-  }
-
-  function saveData() {
-    localStorage.setItem("vapeEntries", JSON.stringify(entries));
-  }
-
-  // --- LOGIC LAYER ---
-  function formatTime() { 
-    return new Date().toTimeString().split(' ')[0].slice(0, 5); 
-  }
-
-  function handleSaveEntry() {
-    const juiceStrength = parseFloat(DOM.juiceStrength.value) || 20;
-    const dailyGoal = parseInt(DOM.dailyGoal.value) || 300;
-    const morningVal = parseInt(DOM.morning.value);
-    const eveningVal = parseInt(DOM.evening.value);
-    const today = new Date().toISOString().split("T")[0];
-
-    if (isNaN(morningVal) && isNaN(eveningVal)) {
-      alert("Please enter a morning or evening counter value.");
-      return;
-    }
-
-    let existing = entries.find(e => e.date === today);
-    
-    // Create new entry if it doesn't exist today
-    if (!existing) {
-      existing = { date: today, goal: dailyGoal, juiceStrength: juiceStrength };
-      entries.unshift(existing);
-    }
-
-    // Update values if provided
-    if (!isNaN(morningVal)) {
-      existing.morning = morningVal;
-      existing.morningTime = formatTime();
-    }
-    if (!isNaN(eveningVal)) {
-      existing.evening = eveningVal;
-      existing.eveningTime = formatTime();
-    }
-
-    // Calculate puffs (with Rollover Protection)
-    if (existing.morning !== undefined && existing.evening !== undefined) {
-      if (existing.evening < existing.morning) {
-        existing.puffs = (VAPE_COUNTER_MAX - existing.morning) + existing.evening;
-      } else {
-        existing.puffs = existing.evening - existing.morning;
-      }
-    } else {
-      existing.puffs = 0;
-    }
-
-    // Update nicotine and strength based on current calculation
-    existing.juiceStrength = juiceStrength;
-    existing.nicotine = +(existing.puffs * juiceStrength * AVG_PUFF_ML).toFixed(2);
-    existing.goal = dailyGoal;
-
-    saveData();
-    updateUI();
-    
-    // Clear inputs
-    DOM.morning.value = "";
-    DOM.evening.value = "";
-  }
-
-  function deleteEntry(date) {
-    if (confirm("Are you sure you want to delete this entry?")) {
-      entries = entries.filter(e => e.date !== date);
-      saveData();
-      updateUI();
-    }
-  }
-
-  // --- UI LAYER ---
-  function updateUI() {
-    renderEntries();
-    renderGraph();
-    renderWeeklySummary();
-    renderInsights();
-    
-    // Manage evening input visibility based on today's morning data
-    const today = new Date().toISOString().split("T")[0];
-    const todaysEntry = entries.find(e => e.date === today);
-    DOM.eveningContainer.style.display = todaysEntry?.morning !== undefined ? "block" : "none";
-  }
-
-  function renderEntries() {
-    DOM.entries.innerHTML = "";
-    entries.forEach(e => {
-      const card = document.createElement("div");
-      card.className = "card";
-      if (e.morning === undefined || e.evening === undefined) card.classList.add("incomplete");
-      
-      // Building innerHTML with sanitized numbers/strings
-      card.innerHTML = `
-        <div class="date">${e.date}</div>
-        <div class="row">
-          <div class="label">Morning</div>
-          <div class="value">${e.morning ?? "-"} <span class="time">${e.morningTime || ""}</span></div>
-        </div>
-        <div class="row">
-          <div class="label">Evening</div>
-          <div class="value">${e.evening ?? "-"} <span class="time">${e.eveningTime || ""}</span></div>
-        </div>
-        <div class="total">Total Puffs: ${e.puffs || 0} | Nicotine: ${e.nicotine || 0} mg</div>
-      `;
-      
-      const delBtn = document.createElement("button");
-      delBtn.className = "deleteBtn";
-      delBtn.textContent = "Delete Entry";
-      delBtn.onclick = () => deleteEntry(e.date);
-      card.appendChild(delBtn);
-
-      DOM.entries.appendChild(card);
-    });
-  }
-
-  function renderGraph() {
-    DOM.graph.innerHTML = "";
-    const last7 = entries.slice(0, 7).reverse();
-    if (last7.length === 0) return;
-
-    const maxPuffs = Math.max(...last7.map(e => e.puffs || 0), 1);
-    
-    last7.forEach(e => {
-      const label = document.createElement("div");
-      label.className = "graphLabel";
-      label.innerHTML = `<span>${e.date}</span> <span>${e.puffs || 0} puffs</span>`;
-      
-      const bar = document.createElement("div");
-      bar.className = "graphBar";
-      
-      const pct = Math.min(((e.puffs || 0) / maxPuffs) * 100, 100);
-      bar.innerHTML = `<div class="graphFill" style="width: ${pct}%"></div>`;
-      
-      DOM.graph.appendChild(label);
-      DOM.graph.appendChild(bar);
-    });
-  }
-
-  function renderWeeklySummary() {
-    const weekly = entries.slice(0, 7);
-    if (!weekly.length) {
-      DOM.weeklySummary.innerHTML = "Not enough data.";
-      return;
-    }
-
-    const totalPuffs = weekly.reduce((acc, e) => acc + (e.puffs || 0), 0);
-    const avgPuffs = Math.round(totalPuffs / weekly.length);
-    const goal = weekly[0].goal || 300; 
-    const progress = Math.min(100, (avgPuffs / goal) * 100);
-    
-    // Determine color based on goal progress
-    let barColor = "#4caf50"; // Green if under goal
-    if (progress > 85) barColor = "#ff9800"; // Orange if close
-    if (progress >= 100) barColor = "#f44336"; // Red if over
-
-    DOM.weeklySummary.innerHTML = `
-      <div class="row"><div class="label">Total Puffs (Past 7 Days):</div><div class="value">${totalPuffs}</div></div>
-      <div class="row"><div class="label">Average Puffs / Day:</div><div class="value">${avgPuffs}</div></div>
-      <div class="row" style="margin-top:12px;"><div class="label">Goal Limit (${goal} puffs):</div></div>
-      <div class="progressBarContainer">
-        <div class="progressBar" style="width:${progress}%; background:${barColor};"></div>
-      </div>
-    `;
-  }
-
-  function renderInsights() {
-    if (!entries.length) { 
-      DOM.insights.innerHTML = "No data yet."; 
-      return; 
-    }
-    
-    const validEntries = entries.filter(e => e.puffs > 0);
-    if (!validEntries.length) {
-      DOM.insights.innerHTML = "Not enough completed entries to generate insights.";
-      return;
-    }
-
-    const totalVals = validEntries.map(e => e.puffs);
-    const highest = Math.max(...totalVals);
-    const lowest = Math.min(...totalVals);
-    
-    DOM.insights.innerHTML = `
-      <div class="row"><div class="label">Highest Puffs / Day:</div><div class="value">${highest}</div></div>
-      <div class="row"><div class="label">Lowest Puffs / Day:</div><div class="value">${lowest}</div></div>
-      <div class="row"><div class="label">Total Tracked Days:</div><div class="value">${entries.length}</div></div>
-    `;
-  }
-
-  // --- EXPORT / RESTORE ---
-  function exportData() {
-    const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(entries));
-    const dlAnchor = document.createElement("a");
-    dlAnchor.setAttribute("href", dataStr);
-    dlAnchor.setAttribute("download", "vapeEntries.json");
-    dlAnchor.click();
-  }
-
-  function exportCSV() {
-    let csv = "Date,MorningCounter,EveningCounter,Puffs,Nicotine_mg,JuiceStrength_mg,DailyGoal\n";
-    entries.forEach(e => {
-      // Safely handle missing historical strengths by falling back to the current input
-      const strength = e.juiceStrength || DOM.juiceStrength.value;
-      csv += `${e.date},${e.morning ?? ""},${e.evening ?? ""},${e.puffs || 0},${e.nicotine || 0},${strength},${e.goal || ""}\n`;
-    });
-    
-    const dlAnchor = document.createElement("a");
-    dlAnchor.setAttribute("href", "data:text/csv;charset=utf-8," + encodeURIComponent(csv));
-    dlAnchor.setAttribute("download", "vapeEntries.csv");
-    dlAnchor.click();
-  }
-
-  function handleRestore(e) {
-    const file = e.target.files[0];
-    if (!file) return;
-    
-    const reader = new FileReader();
-    reader.onload = (event) => {
-      try {
-        const imported = JSON.parse(event.target.result);
-        if (Array.isArray(imported)) {
-          entries = imported;
-          saveData();
-          updateUI();
-          alert("Data restored successfully!");
-        } else {
-          alert("Invalid JSON format. Expected an array of entries.");
-        }
-      } catch {
-        alert("Error reading JSON file.");
-      }
-      DOM.restoreFile.value = ""; // Reset input so same file can be loaded again if needed
+    const DOM = {
+        juiceStrength: document.getElementById("juiceStrength"),
+        dailyGoal: document.getElementById("dailyGoal"),
+        morning: document.getElementById("morning"),
+        evening: document.getElementById("evening"),
+        eveningContainer: document.getElementById("eveningContainer"),
+        entries: document.getElementById("entries"),
+        graph: document.getElementById("graph"),
+        weeklySummary: document.getElementById("weeklySummary"),
+        insights: document.getElementById("insights"),
+        saveBtn: document.getElementById("saveBtn"),
+        exportJsonBtn: document.getElementById("exportJsonBtn"),
+        exportCsvBtn: document.getElementById("exportCsvBtn"),
+        restoreFile: document.getElementById("restoreFile"),
+        restoreBtn: document.getElementById("restoreBtn")
     };
-    reader.readAsText(file);
-  }
 
-  // --- EVENT LISTENERS ---
-  DOM.saveBtn.addEventListener("click", handleSaveEntry);
-  DOM.exportJsonBtn.addEventListener("click", exportData);
-  DOM.exportCsvBtn.addEventListener("click", exportCSV);
-  DOM.restoreBtn.addEventListener("click", () => DOM.restoreFile.click());
-  DOM.restoreFile.addEventListener("change", handleRestore);
+    function loadData() {
+        const stored = JSON.parse(localStorage.getItem("vapeEntries") || "[]");
+        entries = Array.isArray(stored) ? stored : [];
+        entries.sort((a, b) => b.date.localeCompare(a.date));
+        updateUI();
+    }
 
-  // Initialization
-  document.addEventListener("DOMContentLoaded", loadData);
+    function saveData() {
+        localStorage.setItem("vapeEntries", JSON.stringify(entries));
+    }
 
+    function formatTime() { 
+        return new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }); 
+    }
+
+    function handleSaveEntry() {
+        const juiceStrength = parseFloat(DOM.juiceStrength.value) || 20;
+        const dailyGoal = parseInt(DOM.dailyGoal.value) || 300;
+        const morningVal = parseInt(DOM.morning.value);
+        const eveningVal = parseInt(DOM.evening.value);
+        const today = new Date().toISOString().split("T")[0];
+
+        if (isNaN(morningVal) && isNaN(eveningVal)) {
+            alert("Please enter a value");
+            return;
+        }
+
+        let existing = entries.find(e => e.date === today);
+        if (!existing) {
+            existing = { date: today, goal: dailyGoal, juiceStrength: juiceStrength };
+            entries.unshift(existing);
+        }
+
+        if (!isNaN(morningVal)) {
+            existing.morning = morningVal;
+            existing.morningTime = formatTime();
+        }
+        if (!isNaN(eveningVal)) {
+            existing.evening = eveningVal;
+            existing.eveningTime = formatTime();
+        }
+
+        // Calculation with Rollover protection
+        if (existing.morning !== undefined && existing.evening !== undefined) {
+            if (existing.evening < existing.morning) {
+                existing.puffs = (VAPE_COUNTER_MAX - existing.morning) + existing.evening;
+            } else {
+                existing.puffs = existing.evening - existing.morning;
+            }
+        } else {
+            existing.puffs = 0;
+        }
+
+        existing.juiceStrength = juiceStrength;
+        existing.nicotine = +(existing.puffs * juiceStrength * AVG_PUFF_ML).toFixed(2);
+        existing.goal = dailyGoal;
+
+        saveData();
+        updateUI();
+        DOM.morning.value = "";
+        DOM.evening.value = "";
+    }
+
+    function deleteEntry(date) {
+        if (confirm("Delete this entry?")) {
+            entries = entries.filter(e => e.date !== date);
+            saveData();
+            updateUI();
+        }
+    }
+
+    function updateUI() {
+        renderEntries();
+        renderGraph();
+        renderWeeklySummary();
+        renderInsights();
+        
+        const today = new Date().toISOString().split("T")[0];
+        const todaysEntry = entries.find(e => e.date === today);
+        DOM.eveningContainer.style.display = todaysEntry?.morning !== undefined ? "block" : "none";
+    }
+
+    function renderEntries() {
+        DOM.entries.innerHTML = "";
+        entries.forEach(e => {
+            const card = document.createElement("div");
+            card.className = `card ${ (e.morning === undefined || e.evening === undefined) ? 'incomplete' : '' }`;
+            card.innerHTML = `
+                <div class="date">${new Date(e.date).toLocaleDateString(undefined, {weekday:'long', month:'short', day:'numeric'})}</div>
+                <div class="row">
+                    <span class="label-text">Morning Counter</span>
+                    <span class="value-text">${e.morning ?? "-"}<span class="time-text">${e.morningTime || ""}</span></span>
+                </div>
+                <div class="row">
+                    <span class="label-text">Evening Counter</span>
+                    <span class="value-text">${e.evening ?? "-"}<span class="time-text">${e.eveningTime || ""}</span></span>
+                </div>
+                <div class="total-row">
+                    ${e.puffs || 0} Puffs • ${e.nicotine || 0}mg Nicotine
+                </div>
+            `;
+            const del = document.createElement("button");
+            del.className = "deleteBtn";
+            del.textContent = "Remove Record";
+            del.onclick = () => deleteEntry(e.date);
+            card.appendChild(del);
+            DOM.entries.appendChild(card);
+        });
+    }
+
+    function renderGraph() {
+        DOM.graph.innerHTML = "";
+        const last7 = entries.slice(0, 7).reverse();
+        const max = Math.max(...last7.map(e => e.puffs || 0), 100);
+        
+        last7.forEach(e => {
+            const pct = Math.min(((e.puffs || 0) / max) * 100, 100);
+            DOM.graph.innerHTML += `
+                <div class="graphLabel"><span>${e.date.slice(5)}</span><span>${e.puffs || 0}</span></div>
+                <div class="graphBar"><div class="graphFill" style="width:${pct}%"></div></div>
+            `;
+        });
+    }
+
+    function renderWeeklySummary() {
+        const weekly = entries.slice(0, 7);
+        if (!weekly.length) return DOM.weeklySummary.innerHTML = "No data available.";
+        
+        const total = weekly.reduce((acc, e) => acc + (e.puffs || 0), 0);
+        const avg = Math.round(total / weekly.length);
+        const goal = weekly[0].goal || 300;
+        const progress = Math.min((avg / goal) * 100, 100);
+        const color = progress > 100 ? "#ff4444" : progress > 80 ? "#ffbb33" : "#4caf50";
+
+        DOM.weeklySummary.innerHTML = `
+            <div class="row"><span class="label-text">7-Day Average</span><span class="value-text">${avg} puffs/day</span></div>
+            <div class="progressBarContainer">
+                <div class="progressBar" style="width:${progress}%; background:${color}"></div>
+            </div>
+        `;
+    }
+
+    function renderInsights() {
+        if (!entries.length) return DOM.insights.innerHTML = "Waiting for data...";
+        const puffs = entries.map(e => e.puffs || 0);
+        DOM.insights.innerHTML = `
+            <div class="row"><span class="label-text">Highest Usage</span><span class="value-text">${Math.max(...puffs)} puffs</span></div>
+            <div class="row"><span class="label-text">Lowest Usage</span><span class="value-text">${Math.min(...puffs)} puffs</span></div>
+        `;
+    }
+
+    DOM.saveBtn.addEventListener("click", handleSaveEntry);
+    DOM.exportJsonBtn.addEventListener("click", () => {
+        const blob = new Blob([JSON.stringify(entries)], {type: "application/json"});
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url; a.download = "vape_backup.json"; a.click();
+    });
+    DOM.exportCsvBtn.addEventListener("click", () => {
+        let csv = "Date,Morning,Evening,Puffs,Nicotine,Strength,Goal\n";
+        entries.forEach(e => csv += `${e.date},${e.morning||""},${e.evening||""},${e.puffs||0},${e.nicotine||0},${e.juiceStrength},${e.goal}\n`);
+        const a = document.createElement("a");
+        a.href = 'data:text/csv;charset=utf-8,' + encodeURIComponent(csv);
+        a.download = "vape_data.csv"; a.click();
+    });
+    DOM.restoreBtn.addEventListener("click", () => DOM.restoreFile.click());
+    DOM.restoreFile.addEventListener("change", (e) => {
+        const reader = new FileReader();
+        reader.onload = (ev) => {
+            entries = JSON.parse(ev.target.result);
+            saveData(); updateUI(); alert("Data Restored");
+        };
+        reader.readAsText(e.target.files[0]);
+    });
+
+    document.addEventListener("DOMContentLoaded", loadData);
 })();
 </script>
 </body>
