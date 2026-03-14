@@ -5,145 +5,120 @@
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <title>Vape Tracker Advanced</title>
-<style>
-    /* 1. Define Color Variables for Dark Mode (Default) */
-    :root {
-        --bg-color: #000000;
-        --card-bg: #121212;
-        --input-bg: #1a1a1a;
-        --text-main: #e0e0e0;
-        --text-sub: #888888;
-        --border: #222222;
-        --accent: #4caf50;
-    }
-
-    /* 2. Override Variables for Light Mode */
-    @media (prefers-color-scheme: light) {
+    <title>Vape Tracker Pro</title>
+    <style>
         :root {
-            --bg-color: #f2f2f7; /* iOS System Gray 6 */
-            --card-bg: #ffffff;
-            --input-bg: #ffffff;
-            --text-main: #000000;
-            --text-sub: #666666;
-            --border: #d1d1d6;
-            --accent: #34c759; /* iOS System Green */
+            --bg-color: #000000;
+            --card-bg: #121212;
+            --input-bg: #1a1a1a;
+            --text-main: #e0e0e0;
+            --text-sub: #888888;
+            --border: #222222;
+            --accent: #4caf50;
+            --cig-color: #ff9800;
+            --save-color: #00bcd4;
         }
-    }
 
-    html { background-color: var(--bg-color); height: 100%; transition: background 0.3s; }
-    
-    body { 
-        margin: 0; padding: 0; 
-        background-color: var(--bg-color); 
-        color: var(--text-main); 
-        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; 
-        min-height: 100vh; display: block; 
-        -webkit-font-smoothing: antialiased;
-        transition: background 0.3s, color 0.3s;
-    }
+        @media (prefers-color-scheme: light) {
+            :root {
+                --bg-color: #f2f2f7;
+                --card-bg: #ffffff;
+                --input-bg: #ffffff;
+                --text-main: #000000;
+                --text-sub: #666666;
+                --border: #d1d1d6;
+                --accent: #34c759;
+            }
+        }
 
-    .container { width: 100%; max-width: 600px; margin: 0 auto; padding: env(safe-area-inset-top, 20px) 15px env(safe-area-inset-bottom, 20px) 15px; box-sizing: border-box; }
-    
-    h1 { text-align: center; margin: 15px 0 25px 0; font-weight: 700; font-size: 2em; letter-spacing: -0.5px; }
+        html { background-color: var(--bg-color); height: 100%; transition: background 0.3s; }
+        body { margin: 0; padding: 0; background-color: var(--bg-color); color: var(--text-main); font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; min-height: 100vh; display: block; -webkit-font-smoothing: antialiased; }
+        .container { width: 100%; max-width: 600px; margin: 0 auto; padding: env(safe-area-inset-top, 20px) 15px env(safe-area-inset-bottom, 20px) 15px; box-sizing: border-box; }
+        
+        h1 { text-align: center; margin: 15px 0 25px 0; font-weight: 700; font-size: 2em; letter-spacing: -0.5px; }
 
-    .inputCard, .card { 
-        background: var(--card-bg); 
-        border: 1px solid var(--border); 
-        border-radius: 18px; 
-        padding: 20px; 
-        margin-bottom: 20px; 
-        box-sizing: border-box; 
-        box-shadow: 0 4px 12px rgba(0,0,0,0.1); 
-    }
+        .inputCard, .card { background: var(--card-bg); border: 1px solid var(--border); border-radius: 18px; padding: 20px; margin-bottom: 20px; box-sizing: border-box; }
+        
+        label { display: block; font-size: 14px; color: var(--text-sub); margin-left: 4px; margin-bottom: 4px; }
+        input { width: 100%; padding: 12px; margin-top: 4px; margin-bottom: 18px; background: var(--input-bg); border: 1px solid var(--border); border-radius: 12px; color: var(--text-main); font-size: 16px; box-sizing: border-box; outline: none; transition: border-color 0.2s; }
+        input:focus { border-color: var(--accent); }
 
-    label { display: block; font-size: 14px; color: var(--text-sub); margin-left: 4px; margin-bottom: 4px; }
-    
-    input { 
-        width: 100%; padding: 12px; margin-top: 4px; margin-bottom: 18px; 
-        background: var(--input-bg); 
-        border: 1px solid var(--border); 
-        border-radius: 12px; 
-        color: var(--text-main); 
-        font-size: 16px; box-sizing: border-box; outline: none; 
-    }
+        button { width: 100%; padding: 14px; background: var(--text-main); color: var(--bg-color); border: none; border-radius: 14px; font-size: 16px; font-weight: 600; cursor: pointer; -webkit-tap-highlight-color: transparent; }
+        button:active { opacity: 0.7; }
 
-    button { 
-        width: 100%; padding: 14px; 
-        background: var(--text-main); 
-        color: var(--bg-color); 
-        border: none; border-radius: 14px; 
-        font-size: 16px; font-weight: 600; cursor: pointer; 
-        -webkit-tap-highlight-color: transparent; 
-    }
+        #settingsArea { display: none; margin-top: 10px; }
+        .settingsToggleBtn { background: var(--border); color: var(--text-main); margin-top: 20px; }
+        
+        .input-group { position: relative; }
+        .tick-icon { position: absolute; right: 12px; top: 38px; color: var(--accent); font-weight: bold; opacity: 0; transition: opacity 0.3s; }
+        input:not(:placeholder-shown) + .tick-icon { opacity: 1; }
 
-    button:active { opacity: 0.8; }
+        .date { font-size: 13px; color: var(--text-sub); text-transform: uppercase; margin-bottom: 10px; }
+        .row { display: flex; justify-content: space-between; margin: 6px 0; align-items: center; }
+        .total-row { margin-top: 15px; padding-top: 15px; border-top: 1px solid var(--border); font-size: 16px; font-weight: 700; color: var(--accent); display: flex; flex-direction: column; gap: 4px; }
+        .cig-equiv { color: var(--cig-color); font-size: 14px; font-weight: 500; }
+        .cig-saved { color: var(--save-color); font-size: 14px; font-weight: 600; }
 
-    /* UI Logic Styling */
-    .card.incomplete { opacity: 0.6; border-style: dashed; }
-    .date { font-size: 13px; color: var(--text-sub); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 10px; }
-    .row { display: flex; justify-content: space-between; margin: 6px 0; align-items: center; }
-    .label-text { color: var(--text-sub); font-size: 15px; }
-    .value-text { font-weight: 600; color: var(--text-main); font-size: 16px; }
-    .time-text { color: var(--text-sub); font-size: 11px; margin-left: 6px; opacity: 0.7; }
-    .total-row { margin-top: 15px; padding-top: 15px; border-top: 1px solid var(--border); font-size: 16px; font-weight: 700; color: var(--accent); }
-    
-    .graphLabel { font-size: 12px; color: var(--text-sub); margin-bottom: 4px; display: flex; justify-content: space-between; }
-    .graphBar { height: 10px; border-radius: 5px; margin-bottom: 12px; width: 100%; background: var(--border); overflow: hidden; }
-    .graphFill { background: var(--accent); height: 100%; transition: width 0.4s ease-out; }
-    
-    .deleteBtn { background: transparent; color: #ff3b30; border: 1px solid #ff3b30; margin-top: 15px; font-size: 14px; padding: 10px; }
-</style>
+        .graphLabel { font-size: 11px; color: var(--text-sub); margin-bottom: 4px; display: flex; justify-content: space-between; }
+        .graphBar { height: 10px; border-radius: 5px; margin-bottom: 12px; width: 100%; background: var(--border); overflow: hidden; }
+        .graphFill { background: var(--accent); height: 100%; transition: width 0.4s ease-out; }
 
+        .deleteBtn { background: transparent; color: #ff3b30; border: 1px solid #ff3b30; margin-top: 15px; font-size: 14px; padding: 8px; }
+    </style>
 </head>
 <body>
 
 <div class="container">
-    <h1>Vape Tracker Advanced</h1>
+    <h1>Vape Tracker</h1>
 
     <div class="inputCard">
         <label for="morning">Morning Counter</label>
-        <input id="morning" type="number" placeholder="Reading at start of day">
-
+        <input id="morning" type="number" placeholder="Value at start of day">
         <div id="eveningContainer" style="display:none;">
             <label for="evening">Evening Counter</label>
-            <input id="evening" type="number" placeholder="Reading at end of day">
+            <input id="evening" type="number" placeholder="Value at end of day">
         </div>
-
-        <button id="saveBtn">Save Entry</button>
+        <button id="saveBtn">Save Record</button>
     </div>
 
     <div id="entries"></div>
 
     <div class="inputCard">
-        <h3>Weekly Trend</h3>
+        <div class="graphLabel"><span>Usage Trend (Puffs)</span></div>
         <div id="graph"></div>
     </div>
 
-    <div class="inputCard">
-        <h3>Daily Configuration</h3>
-        <div class="settings-grid">
-            <div>
-                <label for="juiceStrength">Strength (mg)</label>
-                <input id="juiceStrength" type="number" step="0.1" value="20">
-            </div>
-            <div>
-                <label for="dailyGoal">Goal (puffs)</label>
-                <input id="dailyGoal" type="number" value="300">
-            </div>
-        </div>
-    </div>
+    <button id="toggleSettings" class="settingsToggleBtn">Settings & Data</button>
 
-    <div class="inputCard">
-        <h3>App Settings</h3>
-        <label for="deviceMax">Device Max (Rollover Point)</label>
-        <input id="deviceMax" type="number" value="9999" placeholder="Usually 999 or 9999">
-        <p style="font-size: 11px; color: #555; margin-top: -10px;">Set this once based on your vape's screen.</p>
-        
-        <button id="exportJsonBtn" style="margin-bottom: 10px; background: #1a1a1a; font-size: 14px;">Backup JSON</button>
-        <button id="exportCsvBtn" style="margin-bottom: 10px; background: #1a1a1a; font-size: 14px;">Export CSV</button>
-        <input type="file" id="restoreFile" accept=".json" style="display:none;">
-        <button id="restoreBtn" style="background: #111; color: #666; font-size: 14px;">Restore JSON</button>
+    <div id="settingsArea">
+        <div class="inputCard">
+            <h3>Configuration</h3>
+            <label for="juiceStrength">Juice Strength (mg/ml)</label>
+            <input id="juiceStrength" type="number" step="0.1">
+            
+            <label for="dailyGoal">Puff Goal</label>
+            <input id="dailyGoal" type="number">
+
+            <div class="input-group">
+                <label for="deviceMax">Device Max (Rollover)</label>
+                <input id="deviceMax" type="number" placeholder="999 or 9999">
+                <span class="tick-icon">✓</span>
+            </div>
+
+            <label for="nicPerCig">Nicotine per Cigarette (mg)</label>
+            <input id="nicPerCig" type="number" step="0.1" value="1.0">
+            
+            <label for="oldHabit">Old Habit (Cigs per day)</label>
+            <input id="oldHabit" type="number" value="20">
+        </div>
+
+        <div class="inputCard">
+            <h3>Data Management</h3>
+            <button id="exportJsonBtn" style="margin-bottom: 10px; background: var(--border);">Backup JSON</button>
+            <button id="exportCsvBtn" style="margin-bottom: 10px; background: var(--border);">Export CSV</button>
+            <input type="file" id="restoreFile" accept=".json" style="display:none;">
+            <button id="restoreBtn" style="background: transparent; border: 1px solid var(--border); color: var(--text-sub);">Restore JSON</button>
+        </div>
     </div>
 </div>
 
@@ -156,76 +131,72 @@
         juiceStrength: document.getElementById("juiceStrength"),
         dailyGoal: document.getElementById("dailyGoal"),
         deviceMax: document.getElementById("deviceMax"),
+        nicPerCig: document.getElementById("nicPerCig"),
+        oldHabit: document.getElementById("oldHabit"),
         morning: document.getElementById("morning"),
         evening: document.getElementById("evening"),
         eveningContainer: document.getElementById("eveningContainer"),
         entries: document.getElementById("entries"),
         graph: document.getElementById("graph"),
         saveBtn: document.getElementById("saveBtn"),
+        toggleSettings: document.getElementById("toggleSettings"),
+        settingsArea: document.getElementById("settingsArea"),
         exportJsonBtn: document.getElementById("exportJsonBtn"),
         exportCsvBtn: document.getElementById("exportCsvBtn"),
         restoreFile: document.getElementById("restoreFile"),
         restoreBtn: document.getElementById("restoreBtn")
     };
 
-    // Load and Save persistent settings (mg, goal, deviceMax)
-    function loadSettings() {
-        DOM.juiceStrength.value = localStorage.getItem("cfg_strength") || "20";
-        DOM.dailyGoal.value = localStorage.getItem("cfg_goal") || "300";
-        DOM.deviceMax.value = localStorage.getItem("cfg_deviceMax") || "9999";
-    }
-
-    function saveSettings() {
-        localStorage.setItem("cfg_strength", DOM.juiceStrength.value);
-        localStorage.setItem("cfg_goal", DOM.dailyGoal.value);
-        localStorage.setItem("cfg_deviceMax", DOM.deviceMax.value);
-    }
-
     function loadData() {
         const stored = JSON.parse(localStorage.getItem("vapeEntries") || "[]");
         entries = Array.isArray(stored) ? stored : [];
         entries.sort((a, b) => b.date.localeCompare(a.date));
-        loadSettings();
+        
+        DOM.juiceStrength.value = localStorage.getItem("cfg_strength") || "20";
+        DOM.dailyGoal.value = localStorage.getItem("cfg_goal") || "300";
+        DOM.deviceMax.value = localStorage.getItem("cfg_deviceMax") || "9999";
+        DOM.nicPerCig.value = localStorage.getItem("cfg_nicPerCig") || "1.0";
+        DOM.oldHabit.value = localStorage.getItem("cfg_oldHabit") || "20";
+        
         updateUI();
     }
 
     function saveData() {
         localStorage.setItem("vapeEntries", JSON.stringify(entries));
-        saveSettings();
+        localStorage.setItem("cfg_strength", DOM.juiceStrength.value);
+        localStorage.setItem("cfg_goal", DOM.dailyGoal.value);
+        localStorage.setItem("cfg_deviceMax", DOM.deviceMax.value);
+        localStorage.setItem("cfg_nicPerCig", DOM.nicPerCig.value);
+        localStorage.setItem("cfg_oldHabit", DOM.oldHabit.value);
     }
 
     function handleSaveEntry() {
         const strength = parseFloat(DOM.juiceStrength.value) || 20;
-        const goal = parseInt(DOM.dailyGoal.value) || 300;
         const dMax = parseInt(DOM.deviceMax.value) || 9999;
         const morningVal = parseInt(DOM.morning.value);
         const eveningVal = parseInt(DOM.evening.value);
         const today = new Date().toISOString().split("T")[0];
 
-        if (isNaN(morningVal) && isNaN(eveningVal)) return alert("Enter a value");
+        if (isNaN(morningVal) && isNaN(eveningVal)) return;
 
         let existing = entries.find(e => e.date === today);
         if (!existing) {
-            existing = { date: today, goal: goal, juiceStrength: strength };
+            existing = { date: today, goal: parseInt(DOM.dailyGoal.value), juiceStrength: strength };
             entries.unshift(existing);
         }
 
-        if (!isNaN(morningVal)) { existing.morning = morningVal; existing.mTime = new Date().toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'}); }
-        if (!isNaN(eveningVal)) { existing.evening = eveningVal; existing.eTime = new Date().toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'}); }
+        if (!isNaN(morningVal)) existing.morning = morningVal;
+        if (!isNaN(eveningVal)) existing.evening = eveningVal;
 
-        // Logic with User-Defined Rollover
         if (existing.morning !== undefined && existing.evening !== undefined) {
-            if (existing.evening < existing.morning) {
-                existing.puffs = (dMax - existing.morning) + existing.evening;
-            } else {
-                existing.puffs = existing.evening - existing.morning;
-            }
+            existing.puffs = (existing.evening < existing.morning) 
+                ? (dMax - existing.morning) + existing.evening 
+                : existing.evening - existing.morning;
         } else {
             existing.puffs = 0;
         }
 
         existing.nicotine = +(existing.puffs * strength * AVG_PUFF_ML).toFixed(2);
-        
         saveData();
         updateUI();
         DOM.morning.value = ""; DOM.evening.value = "";
@@ -233,35 +204,50 @@
 
     function updateUI() {
         DOM.entries.innerHTML = "";
+        const nicCig = parseFloat(DOM.nicPerCig.value) || 1.0;
+        const habit = parseInt(DOM.oldHabit.value) || 20;
+
         entries.forEach(e => {
+            const cigEquiv = (e.nicotine / nicCig).toFixed(1);
+            const saved = Math.max(0, habit - (e.nicotine / nicCig)).toFixed(1);
+            
             const card = document.createElement("div");
             card.className = `card ${ (e.morning === undefined || e.evening === undefined) ? 'incomplete' : '' }`;
             card.innerHTML = `
-                <div class="date">${new Date(e.date).toLocaleDateString(undefined, {weekday:'short', month:'short', day:'numeric'})}</div>
-                <div class="row"><span class="label-text">Morning</span><span class="value-text">${e.morning ?? "-"}<span class="time-text">${e.mTime || ""}</span></span></div>
-                <div class="row"><span class="label-text">Evening</span><span class="value-text">${e.evening ?? "-"}<span class="time-text">${e.eTime || ""}</span></span></div>
-                <div class="total-row">${e.puffs || 0} Puffs • ${e.nicotine || 0}mg Nic</div>
+                <div class="date">${new Date(e.date).toLocaleDateString(undefined, {weekday:'short', day:'numeric'})}</div>
+                <div class="row"><span>Morn: ${e.morning ?? "-"}</span><span>Eve: ${e.evening ?? "-"}</span></div>
+                <div class="total-row">
+                    <span>${e.puffs || 0} Puffs • ${e.nicotine || 0}mg Nic</span>
+                    <span class="cig-equiv">≈ ${cigEquiv} L&M Red Equivalent</span>
+                    <span class="cig-saved">🎉 ${saved} Cigarettes Saved</span>
+                </div>
             `;
             const del = document.createElement("button");
-            del.className = "deleteBtn"; del.textContent = "Remove";
+            del.className = "deleteBtn"; del.textContent = "Delete Day";
             del.onclick = () => { if(confirm("Delete?")) { entries=entries.filter(x=>x.date!==e.date); saveData(); updateUI(); } };
             card.appendChild(del);
             DOM.entries.appendChild(card);
         });
 
-        // Graph
         DOM.graph.innerHTML = "";
         const last7 = entries.slice(0, 7).reverse();
         const max = Math.max(...last7.map(e => e.puffs || 0), 100);
         last7.forEach(e => {
             const pct = Math.min(((e.puffs || 0) / max) * 100, 100);
-            DOM.graph.innerHTML += `<div class="graphLabel"><span>${e.date.slice(5)}</span><span>${e.puffs || 0}</span></div>
-                                    <div class="graphBar"><div class="graphFill" style="width:${pct}%"></div></div>`;
+            DOM.graph.innerHTML += `
+                <div class="graphLabel"><span>${e.date.slice(8)}</span><span>${e.puffs || 0}</span></div>
+                <div class="graphBar"><div class="graphFill" style="width:${pct}%"></div></div>`;
         });
 
         const today = new Date().toISOString().split("T")[0];
         DOM.eveningContainer.style.display = entries.find(e => e.date === today)?.morning !== undefined ? "block" : "none";
     }
+
+    DOM.toggleSettings.addEventListener("click", () => {
+        const isVisible = DOM.settingsArea.style.display === "block";
+        DOM.settingsArea.style.display = isVisible ? "none" : "block";
+        DOM.toggleSettings.textContent = isVisible ? "Settings & Data" : "Close Settings";
+    });
 
     DOM.saveBtn.addEventListener("click", handleSaveEntry);
     DOM.exportJsonBtn.addEventListener("click", () => {
