@@ -1,32 +1,36 @@
 <!DOCTYPE html>
 <html>
 <head>
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Vape Tracker Daily</title>
-
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<title>Vape Tracker Advanced</title>
 <style>
-body{background:#000;color:#e0e0e0;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto;margin:0;padding:20px;}
+body{margin:0;padding:20px;background:#000;color:#e0e0e0;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto;}
 h1{text-align:center;margin-bottom:20px;font-weight:600;}
 .container{max-width:500px;margin:auto;}
 .inputCard{background:#1a1a1a;border-radius:16px;padding:18px;margin-bottom:20px;box-shadow:0 4px 10px rgba(0,0,0,0.6);}
 input,select{width:100%;padding:10px;margin-top:6px;margin-bottom:12px;background:#000;border:1px solid #333;border-radius:10px;color:#fff;font-size:16px;}
-button{width:100%;padding:12px;background:#333;border:none;border-radius:12px;color:#fff;font-size:16px;font-weight:600;}
+button{width:100%;padding:12px;background:#333;border:none;border-radius:12px;color:#fff;font-size:16px;font-weight:600;margin-top:6px;}
 button:active{background:#555;}
 .card{background: linear-gradient(135deg,#111,#222);border-radius:16px;padding:18px;margin-bottom:15px;box-shadow:0 4px 12px rgba(0,0,0,0.6);}
-.date{font-size:16px;color:#aaa;margin-bottom:10px;}
-.row{display:flex;justify-content:space-between;margin:6px 0;}
+.date{font-size:16px;color:#aaa;margin-bottom:6px;}
+.row{display:flex;justify-content:space-between;margin:4px 0;}
 .label{color:#888;}
 .value{font-weight:600;}
-.total{margin-top:10px;font-size:18px;font-weight:700;color:#fff;}
+.time{color:#888;font-size:12px;margin-left:6px;}
+.total{margin-top:10px;font-size:16px;font-weight:700;color:#fff;}
 .graphBar{height:14px;background:#4caf50;border-radius:7px;margin-bottom:6px;}
 .graphLabel{font-size:12px;color:#aaa;margin-bottom:2px;}
+.progressBarContainer{background:#333;border-radius:10px;overflow:hidden;margin-top:6px;}
+.progressBar{height:14px;background:#ff5722;}
+.deleteBtn{background:#880000;margin-top:6px;}
 </style>
 </head>
 <body>
-
 <div class="container">
 
-<h1>Vape Tracker Daily</h1>
+<h1>Vape Tracker Advanced</h1>
 
 <div class="inputCard">
 <label>Juice Strength (mg/ml)</label>
@@ -35,10 +39,12 @@ button:active{background:#555;}
 <label>Morning Counter</label>
 <input id="morning" type="number">
 
+<div id="eveningContainer" style="display:none;">
 <label>Evening Counter</label>
 <input id="evening" type="number">
+</div>
 
-<button onclick="addEntry()">OK</button>
+<button onclick="addEntry()">Save Entry</button>
 </div>
 
 <div id="entries"></div>
@@ -56,92 +62,112 @@ button:active{background:#555;}
 </div>
 
 <script>
-const AVG_PUFF_ML = 0.05 // fixed average volume per puff
-
-let entries = []
+const AVG_PUFF_ML=0.05;
+let entries=[];
 
 function loadData(){
-  const stored = JSON.parse(localStorage.getItem("vapeEntries")||"[]")
-  entries = stored
-  entries.sort((a,b)=>b.date.localeCompare(a.date))
-  render()
+  const stored=JSON.parse(localStorage.getItem("vapeEntries")||"[]");
+  entries=stored;
+  entries.sort((a,b)=>b.date.localeCompare(a.date));
+  render();
 }
+function saveData(){ localStorage.setItem("vapeEntries",JSON.stringify(entries)) }
 
-function saveData(){ localStorage.setItem("vapeEntries", JSON.stringify(entries)) }
+function formatTime(){ const d=new Date(); return d.toTimeString().split(' ')[0].slice(0,5); }
 
 function addEntry(){
-  const juiceStrength = parseFloat(document.getElementById("juiceStrength").value) || 20
-  const morningVal = parseInt(document.getElementById("morning").value)
-  const eveningVal = parseInt(document.getElementById("evening").value)
-  const today = new Date().toISOString().split("T")[0]
+  const juiceStrength=parseFloat(document.getElementById("juiceStrength").value)||20;
+  const morningVal=parseInt(document.getElementById("morning").value);
+  const eveningVal=parseInt(document.getElementById("evening").value);
+  const today=new Date().toISOString().split("T")[0];
 
-  let existing = entries.find(e=>e.date===today)
+  if(!morningVal && !eveningVal){ alert("Enter morning or evening counter"); return; }
 
-  if(existing){
-    if(!isNaN(morningVal)) existing.morning = morningVal
-    if(!isNaN(eveningVal)) existing.evening = eveningVal
-    existing.puffs = (existing.evening - existing.morning)
-    existing.nicotine = +(existing.puffs * juiceStrength * AVG_PUFF_ML).toFixed(2)
+  let existing=entries.find(e=>e.date===today);
+  if(!existing){
+    const morning=morningVal||0;
+    const evening=eveningVal||0;
+    const puffs=(evening||0)-(morning||0);
+    const nicotine=+(puffs*juiceStrength*AVG_PUFF_ML).toFixed(2);
+    entries.unshift({date:today,morning,morningTime:morningVal?formatTime():"",evening,eveningTime:eveningVal?formatTime():"",puffs,nicotine});
   }else{
-    const morning = morningVal||0
-    const evening = eveningVal||0
-    const puffs = evening - morning
-    const nicotine = +(puffs * juiceStrength * AVG_PUFF_ML).toFixed(2)
-    entries.unshift({date:today,morning,morningVal,evening,puffs,nicotine})
+    if(morningVal){ existing.morning=morningVal; existing.morningTime=formatTime(); }
+    if(eveningVal){ existing.evening=eveningVal; existing.eveningTime=formatTime(); }
+    existing.puffs=(existing.evening||0)-(existing.morning||0);
+    existing.nicotine=+(existing.puffs*juiceStrength*AVG_PUFF_ML).toFixed(2);
   }
 
-  saveData()
-  render()
-  document.getElementById("morning").value=""
-  document.getElementById("evening").value=""
+  // show evening if morning entered
+  document.getElementById("eveningContainer").style.display=morningVal||existing.morning? "block":"none";
+
+  saveData(); render();
+  document.getElementById("morning").value="";
+  document.getElementById("evening").value="";
+}
+
+function deleteEntry(date){
+  if(confirm("Delete this entry?")){
+    entries=entries.filter(e=>e.date!==date);
+    saveData(); render();
+  }
 }
 
 function render(){
-  const container = document.getElementById("entries")
-  container.innerHTML=""
+  const container=document.getElementById("entries"); container.innerHTML="";
   entries.forEach(e=>{
-    const card = document.createElement("div")
-    card.className="card"
+    const card=document.createElement("div"); card.className="card";
     card.innerHTML=`
       <div class="date">${e.date}</div>
-      <div class="row"><div class="label">Morning</div><div class="value">${e.morning||"-"}</div></div>
-      <div class="row"><div class="label">Evening</div><div class="value">${e.evening||"-"}</div></div>
+      <div class="row"><div class="label">Morning</div><div class="value">${e.morning||"-"} <span class="time">${e.morningTime||""}</span></div></div>
+      <div class="row"><div class="label">Evening</div><div class="value">${e.evening||"-"} <span class="time">${e.eveningTime||""}</span></div></div>
       <div class="total">Puffs: ${e.puffs||0} | Nicotine: ${e.nicotine||0} mg</div>
-    `
-    container.appendChild(card)
-  })
-  renderGraph()
-  renderWeeklySummary()
+      <button class="deleteBtn" onclick="deleteEntry('${e.date}')">Delete Entry</button>
+    `;
+    container.appendChild(card);
+  });
+  renderGraph(); renderWeeklySummary();
 }
 
 function renderGraph(){
-  const graph = document.getElementById("graph")
-  graph.innerHTML=""
-  const last7 = entries.slice(0,7).reverse()
+  const graph=document.getElementById("graph"); graph.innerHTML="";
+  const last7=entries.slice(0,7).reverse();
   last7.forEach(e=>{
-    const label = document.createElement("div")
-    label.className="graphLabel"
-    label.textContent=e.date
-    const bar = document.createElement("div")
-    bar.className="graphBar"
-    bar.style.width = Math.min(100,e.puffs)+"%"
-    graph.appendChild(label)
-    graph.appendChild(bar)
-  })
+    const label=document.createElement("div"); label.className="graphLabel"; label.textContent=e.date;
+    const bar=document.createElement("div"); bar.className="graphBar"; bar.style.width=Math.min(100,e.puffs||0)+"%";
+    graph.appendChild(label); graph.appendChild(bar);
+  });
 }
 
 function renderWeeklySummary(){
-  const weekly = entries.slice(0,7)
-  const totalPuffs = weekly.reduce((acc,e)=>acc+e.puffs,0)
-  const avgPuffs = weekly.length?Math.round(totalPuffs/weekly.length):0
+  const weekly=entries.slice(0,7);
+  const totalPuffs=weekly.reduce((acc,e)=>acc+(e.puffs||0),0);
+  const avgPuffs=weekly.length?Math.round(totalPuffs/weekly.length):0;
+
+  const morningSum=weekly.reduce((acc,e)=>acc+(e.morning||0),0);
+  const eveningSum=weekly.reduce((acc,e)=>acc+(e.evening||0),0);
+  const avgMorning=weekly.length?Math.round(morningSum/weekly.length):0;
+  const avgEvening=weekly.length?Math.round(eveningSum/weekly.length):0;
+
+  // weekly goal tracker (example goal: 300 puffs/day)
+  const goal=300; 
+  const progress=Math.min(100,(avgPuffs/goal)*100);
+
   document.getElementById("weeklySummary").innerHTML=`
     Total Puffs (7 days): ${totalPuffs}<br>
-    Average Puffs per day: ${avgPuffs}
-  `
+    Avg Puffs/day: ${avgPuffs}<br>
+    Avg Morning Counter: ${avgMorning} | Avg Evening Counter: ${avgEvening}<br>
+    Weekly Goal Progress: 
+    <div class="progressBarContainer"><div class="progressBar" style="width:${progress}%"></div></div>
+  `;
 }
 
-loadData()
+// auto-show evening if morning exists
+document.addEventListener("DOMContentLoaded",()=>{
+  const today=new Date().toISOString().split("T")[0];
+  const existing=JSON.parse(localStorage.getItem("vapeEntries")||"[]").find(e=>e.date===today);
+  if(existing && existing.morning) document.getElementById("eveningContainer").style.display="block";
+  loadData();
+});
 </script>
-
 </body>
 </html>
