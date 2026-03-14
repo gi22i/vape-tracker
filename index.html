@@ -6,13 +6,12 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <title>Vape Tracker Advanced</title>
 <style>
-/* --- Safe area + full screen layout --- */
-body{
+body {
   margin:0;
-  padding-top: env(safe-area-inset-top, 20px);
-  padding-bottom: env(safe-area-inset-bottom, 20px);
-  padding-left: env(safe-area-inset-left, 0);
-  padding-right: env(safe-area-inset-right, 0);
+  padding-top: env(safe-area-inset-top,20px);
+  padding-bottom: env(safe-area-inset-bottom,20px);
+  padding-left: env(safe-area-inset-left,0);
+  padding-right: env(safe-area-inset-right,0);
   background:#000;
   color:#e0e0e0;
   font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto;
@@ -22,18 +21,23 @@ body{
 }
 .container{
   width:100%;
-  max-width:500px;
-  padding:0 20px;
+  max-width:600px;
+  padding:0 10px;
   min-height: calc(100vh - env(safe-area-inset-top) - env(safe-area-inset-bottom));
 }
 
-/* --- Input card styling --- */
-.inputCard{
+/* Title centered */
+h1{text-align:center;margin-bottom:20px;font-weight:600;font-size:1.8em;}
+
+/* Input cards */
+.inputCard, .card{
   background:#1a1a1a;
   border-radius:16px;
   padding:18px;
   margin-bottom:20px;
   box-shadow:0 4px 10px rgba(0,0,0,0.6);
+  width:100%;
+  box-sizing:border-box;
 }
 input,select{
   width:100%;
@@ -59,14 +63,7 @@ button{
 }
 button:active{background:#555;}
 
-/* --- Cards --- */
-.card{
-  background: linear-gradient(135deg,#111,#222);
-  border-radius:16px;
-  padding:18px;
-  margin-bottom:15px;
-  box-shadow:0 4px 12px rgba(0,0,0,0.6);
-}
+/* Cards */
 .card.incomplete{opacity:0.7;}
 .date{font-size:16px;color:#aaa;margin-bottom:6px;}
 .row{display:flex;justify-content:space-between;margin:4px 0;}
@@ -75,17 +72,17 @@ button:active{background:#555;}
 .time{color:#888;font-size:12px;margin-left:6px;}
 .total{margin-top:10px;font-size:16px;font-weight:700;color:#fff;}
 
-/* --- Graph bars --- */
-.graphBar{height:14px;border-radius:7px;margin-bottom:6px;}
-.graphMorning{background:#4caf50;display:inline-block;height:14px;}
-.graphEvening{background:#2196f3;display:inline-block;height:14px;}
-.graphLabel{font-size:12px;color:#aaa;margin-bottom:2px;}
+/* Graph bars proportional */
+.graphBar{height:14px;border-radius:7px;margin-bottom:6px;width:100%;display:flex;}
+.graphMorning{background:#4caf50;height:14px;border-radius:7px 0 0 7px;}
+.graphEvening{background:#2196f3;height:14px;border-radius:0 7px 7px 0;}
+.graphLabel{font-size:12px;color:#aaa;margin-bottom:2px;text-align:left;}
 
-/* --- Weekly progress --- */
-.progressBarContainer{background:#333;border-radius:10px;overflow:hidden;margin-top:6px;}
-.progressBar{height:14px;background:#ff5722;}
+/* Weekly progress */
+.progressBarContainer{background:#333;border-radius:10px;overflow:hidden;margin-top:6px;width:100%;}
+.progressBar{height:14px;background:#ff5722;width:0%;}
 
-/* --- Delete / swipe hint --- */
+/* Delete / swipe hint */
 .deleteBtn{background:#880000;margin-top:6px;}
 .swipeHint{font-size:12px;color:#555;margin-top:4px;text-align:right;}
 </style>
@@ -215,16 +212,17 @@ function render(){
   renderGraph(); renderWeeklySummary(); renderInsights();
 }
 
-// ----- GRAPH -----
+// ----- GRAPH (proportional width) -----
 function renderGraph(){
   const graph=document.getElementById("graph"); graph.innerHTML="";
   const last7=entries.slice(0,7).reverse();
+  const maxPuffs=Math.max(...last7.map(e=>e.puffs||0),1);
   last7.forEach(e=>{
     const label=document.createElement("div"); label.className="graphLabel"; label.textContent=e.date;
-    const bar=document.createElement("div"); 
-    const morningWidth=e.morning||0;
-    const eveningWidth=(e.evening||0)-(e.morning||0);
-    bar.innerHTML=`<div class="graphMorning" style="width:${morningWidth}px"></div><div class="graphEvening" style="width:${eveningWidth}px"></div>`;
+    const bar=document.createElement("div"); bar.className="graphBar";
+    const morningPct=((e.morning||0)/maxPuffs)*100;
+    const eveningPct=(((e.evening||0)-(e.morning||0))/maxPuffs)*100;
+    bar.innerHTML=`<div class="graphMorning" style="width:${morningPct}%"></div><div class="graphEvening" style="width:${eveningPct}%"></div>`;
     graph.appendChild(label); graph.appendChild(bar);
   });
 }
@@ -234,15 +232,12 @@ function renderWeeklySummary(){
   const weekly=entries.slice(0,7);
   const totalPuffs=weekly.reduce((acc,e)=>acc+(e.puffs||0),0);
   const avgPuffs=weekly.length?Math.round(totalPuffs/weekly.length):0;
-
   const morningSum=weekly.reduce((acc,e)=>acc+(e.morning||0),0);
   const eveningSum=weekly.reduce((acc,e)=>acc+(e.evening||0),0);
   const avgMorning=weekly.length?Math.round(morningSum/weekly.length):0;
   const avgEvening=weekly.length?Math.round(eveningSum/weekly.length):0;
-
   const goal=weekly.length?weekly[0].goal:300; 
   const progress=Math.min(100,(avgPuffs/goal)*100);
-
   document.getElementById("weeklySummary").innerHTML=`
     Total Puffs (7 days): ${totalPuffs}<br>
     Avg Puffs/day: ${avgPuffs}<br>
