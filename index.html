@@ -40,8 +40,8 @@ button:active{background:#555;}
 <label>Juice Strength (mg/ml)</label>
 <input id="juiceStrength" type="number" step="0.1" value="20">
 
-<label>Weekly Goal (puffs/day)</label>
-<input id="weeklyGoal" type="number" value="300">
+<label>Daily Goal (puffs per day)</label>
+<input id="dailyGoal" type="number" value="300">
 
 <label>Morning Counter</label>
 <input id="morning" type="number">
@@ -102,7 +102,7 @@ function addEntry(){
   const morningVal=parseInt(document.getElementById("morning").value);
   const eveningVal=parseInt(document.getElementById("evening").value);
   const today=new Date().toISOString().split("T")[0];
-  const weeklyGoal=parseInt(document.getElementById("weeklyGoal").value)||300;
+  const dailyGoal=parseInt(document.getElementById("dailyGoal").value)||300;
 
   if(!morningVal && !eveningVal){ alert("Enter morning or evening counter"); return; }
 
@@ -112,13 +112,13 @@ function addEntry(){
     const evening=eveningVal||0;
     const puffs=(evening||0)-(morning||0);
     const nicotine=+(puffs*juiceStrength*AVG_PUFF_ML).toFixed(2);
-    entries.unshift({date:today,morning,morningTime:morningVal?formatTime():"",evening,eveningTime:eveningVal?formatTime():"",puffs,nicotine,goal:weeklyGoal});
+    entries.unshift({date:today,morning,morningTime:morningVal?formatTime():"",evening,eveningTime:eveningVal?formatTime():"",puffs,nicotine,goal:dailyGoal});
   }else{
     if(morningVal){ existing.morning=morningVal; existing.morningTime=formatTime(); }
     if(eveningVal){ existing.evening=eveningVal; existing.eveningTime=formatTime(); }
     existing.puffs=(existing.evening||0)-(existing.morning||0);
     existing.nicotine=+(existing.puffs*juiceStrength*AVG_PUFF_ML).toFixed(2);
-    existing.goal=weeklyGoal;
+    existing.goal=dailyGoal;
   }
 
   document.getElementById("eveningContainer").style.display=morningVal||existing.morning? "block":"none";
@@ -188,7 +188,7 @@ function renderWeeklySummary(){
     Total Puffs (7 days): ${totalPuffs}<br>
     Avg Puffs/day: ${avgPuffs}<br>
     Avg Morning Counter: ${avgMorning} | Avg Evening Counter: ${avgEvening}<br>
-    Weekly Goal Progress: 
+    Daily Goal Progress: 
     <div class="progressBarContainer"><div class="progressBar" style="width:${progress}%"></div></div>
   `;
 }
@@ -220,7 +220,7 @@ function exportData(){
   dlAnchor.click();
 }
 function exportCSV(){
-  let csv="Date,Morning,Evening,Puffs,Nicotine(mg),JuiceStrength,Goal\n";
+  let csv="Date,Morning,Evening,Puffs,Nicotine(mg),JuiceStrength,DailyGoal\n";
   entries.forEach(e=>{
     csv+=`${e.date},${e.morning||""},${e.evening||""},${e.puffs||""},${e.nicotine||""},${document.getElementById("juiceStrength").value},${e.goal||""}\n`;
   });
