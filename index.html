@@ -2,62 +2,35 @@
 <html>
 <head>
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Vape Tracker Advanced</title>
+<title>Vape Tracker Daily</title>
 
 <style>
-body {
-  background:#000;
-  color:#e0e0e0;
-  font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto;
-  margin:0;
-  padding:20px;
-}
-h1{ text-align:center; margin-bottom:20px; font-weight:600; }
-.container{ max-width:500px; margin:auto; }
-.inputCard{
-  background:#1a1a1a;
-  border-radius:16px;
-  padding:18px;
-  margin-bottom:20px;
-  box-shadow:0 4px 10px rgba(0,0,0,0.6);
-}
-input, select{
-  width:100%; padding:10px; margin-top:6px; margin-bottom:12px;
-  background:#000; border:1px solid #333; border-radius:10px;
-  color:#fff; font-size:16px;
-}
-button{
-  width:100%; padding:12px; background:#333; border:none;
-  border-radius:12px; color:#fff; font-size:16px; font-weight:600;
-}
-button:active{ background:#555; }
-.card{
-  background: linear-gradient(135deg,#111,#222);
-  border-radius:16px; padding:18px; margin-bottom:15px;
-  box-shadow:0 4px 12px rgba(0,0,0,0.6);
-}
-.date{ font-size:16px; color:#aaa; margin-bottom:10px; }
-.row{ display:flex; justify-content:space-between; margin:6px 0; }
-.label{ color:#888; }
-.value{ font-weight:600; }
-.total{ margin-top:10px; font-size:18px; font-weight:700; color:#fff; }
-.graphBar{ height:14px; background:#4caf50; border-radius:7px; margin-bottom:6px; }
-.graphLabel{ font-size:12px; color:#aaa; margin-bottom:2px; }
+body{background:#000;color:#e0e0e0;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto;margin:0;padding:20px;}
+h1{text-align:center;margin-bottom:20px;font-weight:600;}
+.container{max-width:500px;margin:auto;}
+.inputCard{background:#1a1a1a;border-radius:16px;padding:18px;margin-bottom:20px;box-shadow:0 4px 10px rgba(0,0,0,0.6);}
+input,select{width:100%;padding:10px;margin-top:6px;margin-bottom:12px;background:#000;border:1px solid #333;border-radius:10px;color:#fff;font-size:16px;}
+button{width:100%;padding:12px;background:#333;border:none;border-radius:12px;color:#fff;font-size:16px;font-weight:600;}
+button:active{background:#555;}
+.card{background: linear-gradient(135deg,#111,#222);border-radius:16px;padding:18px;margin-bottom:15px;box-shadow:0 4px 12px rgba(0,0,0,0.6);}
+.date{font-size:16px;color:#aaa;margin-bottom:10px;}
+.row{display:flex;justify-content:space-between;margin:6px 0;}
+.label{color:#888;}
+.value{font-weight:600;}
+.total{margin-top:10px;font-size:18px;font-weight:700;color:#fff;}
+.graphBar{height:14px;background:#4caf50;border-radius:7px;margin-bottom:6px;}
+.graphLabel{font-size:12px;color:#aaa;margin-bottom:2px;}
 </style>
 </head>
 <body>
 
 <div class="container">
 
-<h1>Vape Tracker Advanced</h1>
+<h1>Vape Tracker Daily</h1>
 
 <div class="inputCard">
-<label>Mode</label>
-<select id="mode">
-  <option value="both">Morning + Evening</option>
-  <option value="morning">Morning Only</option>
-  <option value="evening">Evening Only</option>
-</select>
+<label>Juice Strength (mg/ml)</label>
+<input id="juiceStrength" type="number" step="0.1" value="20">
 
 <label>Morning Counter</label>
 <input id="morning" type="number">
@@ -65,10 +38,7 @@ button:active{ background:#555; }
 <label>Evening Counter</label>
 <input id="evening" type="number">
 
-<label>Nicotine per Puff (mg)</label>
-<input id="nicotinePerPuff" type="number" step="0.01" placeholder="e.g., 0.05">
-
-<button onclick="addEntry()">Save Today</button>
+<button onclick="addEntry()">OK</button>
 </div>
 
 <div id="entries"></div>
@@ -86,72 +56,46 @@ button:active{ background:#555; }
 </div>
 
 <script>
-// ----- DATA HANDLING -----
+const AVG_PUFF_ML = 0.05 // fixed average volume per puff
+
 let entries = []
 
-// Load initial JSON + localStorage
-async function loadData(){
-  try{
-    let res = await fetch("data.json")
-    let data = await res.json()
-    entries = data.entries || []
-  }catch{ entries=[] }
-
-  // Merge with localStorage
+function loadData(){
   const stored = JSON.parse(localStorage.getItem("vapeEntries")||"[]")
-  entries = [...stored, ...entries]
-  // Sort newest first
+  entries = stored
   entries.sort((a,b)=>b.date.localeCompare(a.date))
   render()
 }
 
-// Save to localStorage
 function saveData(){ localStorage.setItem("vapeEntries", JSON.stringify(entries)) }
 
-// ----- ADD ENTRY -----
 function addEntry(){
-  const mode = document.getElementById("mode").value
+  const juiceStrength = parseFloat(document.getElementById("juiceStrength").value) || 20
   const morningVal = parseInt(document.getElementById("morning").value)
   const eveningVal = parseInt(document.getElementById("evening").value)
-  const nicPerPuff = parseFloat(document.getElementById("nicotinePerPuff").value)||0
-
-  if( (mode==="both" && (!morningVal || !eveningVal)) ||
-      (mode==="morning" && !morningVal) ||
-      (mode==="evening" && !eveningVal)){
-    alert("Enter required numbers for selected mode")
-    return
-  }
-
   const today = new Date().toISOString().split("T")[0]
+
   let existing = entries.find(e=>e.date===today)
-  let puffs = 0
-
-  if(mode==="both") puffs = eveningVal - morningVal
-  else if(mode==="morning") puffs = 0
-  else if(mode==="evening") puffs = eveningVal - (existing?existing.evening:0)
-
-  const entryData = {
-    date: today,
-    morning: morningVal||0,
-    evening: eveningVal||0,
-    puffs: puffs,
-    nicotine: +(puffs*nicPerPuff).toFixed(2)
-  }
 
   if(existing){
-    Object.assign(existing, entryData)
+    if(!isNaN(morningVal)) existing.morning = morningVal
+    if(!isNaN(eveningVal)) existing.evening = eveningVal
+    existing.puffs = (existing.evening - existing.morning)
+    existing.nicotine = +(existing.puffs * juiceStrength * AVG_PUFF_ML).toFixed(2)
   }else{
-    entries.unshift(entryData)
+    const morning = morningVal||0
+    const evening = eveningVal||0
+    const puffs = evening - morning
+    const nicotine = +(puffs * juiceStrength * AVG_PUFF_ML).toFixed(2)
+    entries.unshift({date:today,morning,morningVal,evening,puffs,nicotine})
   }
 
   saveData()
   render()
   document.getElementById("morning").value=""
   document.getElementById("evening").value=""
-  document.getElementById("nicotinePerPuff").value=""
 }
 
-// ----- RENDER -----
 function render(){
   const container = document.getElementById("entries")
   container.innerHTML=""
@@ -160,9 +104,9 @@ function render(){
     card.className="card"
     card.innerHTML=`
       <div class="date">${e.date}</div>
-      <div class="row"><div class="label">Morning</div><div class="value">${e.morning}</div></div>
-      <div class="row"><div class="label">Evening</div><div class="value">${e.evening}</div></div>
-      <div class="total">Puffs today: ${e.puffs} | Nicotine: ${e.nicotine} mg</div>
+      <div class="row"><div class="label">Morning</div><div class="value">${e.morning||"-"}</div></div>
+      <div class="row"><div class="label">Evening</div><div class="value">${e.evening||"-"}</div></div>
+      <div class="total">Puffs: ${e.puffs||0} | Nicotine: ${e.nicotine||0} mg</div>
     `
     container.appendChild(card)
   })
@@ -170,7 +114,6 @@ function render(){
   renderWeeklySummary()
 }
 
-// ----- GRAPH -----
 function renderGraph(){
   const graph = document.getElementById("graph")
   graph.innerHTML=""
@@ -187,7 +130,6 @@ function renderGraph(){
   })
 }
 
-// ----- WEEKLY SUMMARY -----
 function renderWeeklySummary(){
   const weekly = entries.slice(0,7)
   const totalPuffs = weekly.reduce((acc,e)=>acc+e.puffs,0)
